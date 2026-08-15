@@ -1,0 +1,9 @@
+*.php
+admin/
+api/
+data/
+sql/
+scratch/
+*.py
+*.ps1
+*.txt
