@@ -931,6 +931,28 @@ button {
     .about__card:nth-child(2):hover {
         transform: scale(1.02) !important;
     }
+
+    .about__card-number {
+        font-size: 36px;
+    }
+
+    .about__card {
+        padding: 24px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .about__card-number {
+        font-size: 28px;
+    }
+
+    .about__card {
+        padding: 20px 16px;
+    }
+
+    .about__card-text {
+        font-size: 11px;
+    }
 }
 
 .about__card--accent {
