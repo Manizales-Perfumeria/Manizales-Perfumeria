@@ -441,9 +441,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // === DELEGACIÓN GLOBAL DE EVENTOS DE TARJETAS ===
+    initCardEventDelegation();
+
     // === LOAD PRODUCTS ===
     loadProducts();
-
 
 });
 
@@ -506,20 +508,28 @@ function getDefaultProducts() {
     ];
 }
 
-// === RENDER PRODUCTS WITH FILTERS ===
+// === RENDER PRODUCTS WITH FILTERS (BAJO DEMANDA) ===
 function renderNuevosProducts() {
+    populateAromaSelect('nuevos');
+    updateNameDropdownOptions('nuevos');
     applyFilters('nuevos');
 }
 
 function renderHombreProducts() {
+    populateAromaSelect('hombre');
+    updateNameDropdownOptions('hombre');
     applyFilters('hombre');
 }
 
 function renderMujerProducts() {
+    populateAromaSelect('mujer');
+    updateNameDropdownOptions('mujer');
     applyFilters('mujer');
 }
 
 function renderUnisexProducts() {
+    populateAromaSelect('unisex');
+    updateNameDropdownOptions('unisex');
     applyFilters('unisex');
 }
 
@@ -962,26 +972,33 @@ function createProductCard(product, viewTarget) {
     '</div>';
 }
 
-// === ATTACH CARD CLICK LISTENERS ===
-function attachCardClickListeners() {
-    var detailBtns = document.querySelectorAll('.product-card__details-btn');
-    
-    detailBtns.forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
+// === DELEGACIÓN GLOBAL DE EVENTOS DE TARJETAS (CERO RETARDO) ===
+var cardDelegationInitialized = false;
+
+function initCardEventDelegation() {
+    if (cardDelegationInitialized) return;
+    cardDelegationInitialized = true;
+
+    document.addEventListener('click', function(e) {
+        var detailBtn = e.target.closest('.product-card__details-btn');
+        if (detailBtn) {
             e.stopPropagation();
-            var productId = parseInt(this.getAttribute('data-id'));
-            openProductModal(productId);
-        });
+            var btnId = parseInt(detailBtn.getAttribute('data-id'));
+            if (btnId) openProductModal(btnId);
+            return;
+        }
+
+        var card = e.target.closest('.product-card');
+        if (card) {
+            var cardId = parseInt(card.getAttribute('data-id'));
+            if (cardId) openProductModal(cardId);
+            return;
+        }
     });
-    
-    // Also allow clicking on the card itself
-    var cards = document.querySelectorAll('.product-card');
-    cards.forEach(function(card) {
-        card.addEventListener('click', function() {
-            var productId = parseInt(this.getAttribute('data-id'));
-            openProductModal(productId);
-        });
-    });
+}
+
+function attachCardClickListeners() {
+    // Delegación global activa: no se requiere recorrer tarjetas en cada render
 }
 
 // === SEARCH AND FILTER FUNCTIONALITY ===
@@ -1059,15 +1076,19 @@ function updateDynamicStats() {
     if (statUnisex) statUnisex.textContent = '+' + unisexCount;
 }
 
-// === SCROLL REVEAL FOR PERFORMANCE ===
+// === SCROLL REVEAL OPTIMIZADO CON RAF ===
 var scrollRevealObserver = null;
+var scrollRevealRafId = null;
 
 function updateScrollReveal() {
-    // Selector ampliado: antes solo las tarjetas de producto tenian animacion
-    // de entrada al hacer scroll. Ahora tambien la tienen las tarjetas de
-    // "Quienes Somos", "Ubicacion", el encabezado de la seccion de evento y
-    // las columnas del pie de pagina, para que la web se sienta viva en
-    // cualquier vista, con o sin evento activo.
+    if (scrollRevealRafId) cancelAnimationFrame(scrollRevealRafId);
+    scrollRevealRafId = requestAnimationFrame(function() {
+        scrollRevealRafId = null;
+        _doUpdateScrollReveal();
+    });
+}
+
+function _doUpdateScrollReveal() {
     var revealSelector = [
         '.product-card',
         '.about__card',
@@ -1079,6 +1100,7 @@ function updateScrollReveal() {
     ].map(function(s) { return s + ':not(.reveal--active)'; }).join(', ');
 
     var cards = document.querySelectorAll(revealSelector);
+    if (!cards.length) return;
 
     cards.forEach(function(card, index) {
         card.style.setProperty('--card-index', index % 4);
@@ -1110,24 +1132,26 @@ function updateScrollReveal() {
     });
 }
 
-// === INITIALIZE PRODUCTS (called after loading) ===
+// === INITIALIZE PRODUCTS (OPTIMIZADO PARA CARGA INSTANTÁNEA) ===
 function initProducts() {
-    populateNameSelects();
-    renderNuevosProducts();
-    renderHombreProducts();
-    renderMujerProducts();
-    renderUnisexProducts();
+    // Solo renderizar lo visible en 'inicio' para que la página responda al instante
     renderFeaturedProducts();
     renderFraganciaDelMes();
     updateDynamicStats();
     initSearch();
     updateScrollReveal();
+
     // Inicializar eventos estacionales
     if (typeof EventosManager !== 'undefined') {
         EventosManager.initEventos();
     }
-    // Segundo pase tras layout completo (vistas ocultas al inicio)
-    setTimeout(function() { updateScrollReveal(); }, 300);
+
+    // Pre-cargar selects y filtros de las otras secciones durante el tiempo ocioso (idle)
+    // sin bloquear la respuesta táctil ni visual de la página
+    var idleCallback = window.requestIdleCallback || function(cb) { setTimeout(cb, 600); };
+    idleCallback(function() {
+        populateNameSelects();
+    });
 }
 
 // === FRAGRANCIA DEL MES ===

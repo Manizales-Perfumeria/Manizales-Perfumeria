@@ -304,19 +304,6 @@ var AuraAIEngine = (function() {
 })();
 
 window.AuraAIEngine = AuraAIEngine;
-
-if (typeof AuraIA !== 'undefined') {
-    AuraAIEngine.init();
-} else {
-    var _waitRetries = 0;
-    var _maxRetries = 20;
-    var _waitInterval = setInterval(function() {
-        _waitRetries++;
-        if (typeof AuraIA !== 'undefined' || _waitRetries >= _maxRetries) {
-            clearInterval(_waitInterval);
-            if (typeof AuraIA !== 'undefined') {
-                AuraAIEngine.init();
-            }
-        }
-    }, 500);
-}
+// No inicializar automáticamente al cargar la página para evitar descargas
+// de 75MB y bloqueo del hilo principal de JavaScript. Se inicializa bajo demanda
+// cuando el usuario abre el chat de Aura AI.

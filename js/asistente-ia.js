@@ -1,6 +1,6 @@
 /* ==========================================================================
    AURA AI — Sommelier de Perfumería e Inteligencia Artificial
-   Manizales Perfumería — Motor 100% Frontend (Sin APIs externas)
+   Perfumería Manizales — Motor 100% Frontend (Sin APIs externas)
    ========================================================================== */
 
 var AuraIA = (function() {
@@ -41,7 +41,7 @@ var AuraIA = (function() {
             parfum: "Un **Parfum / Extrait de Parfum / Elixir** supera el 20% al 40% de concentración pura. Son fragancias de fijación extrema (12+ horas) que dejan una estela inolvidable y maduran profundamente en piel."
         },
         // Envíos y tienda
-        envios: "📍 En **Manizales Perfumería** realizamos entregas rápidas a domicilio en **Manizales, Villamaría y Neira**, y despachos seguros a toda Colombia coordinados directamente por WhatsApp.",
+        envios: "📍 En **Perfumería Manizales** realizamos entregas rápidas a domicilio en **Manizales, Villamaría y Neira**, y despachos seguros a toda Colombia coordinados directamente por WhatsApp.",
         pedidos: "💳 Para gestionar tu pedido o apartar tu fragancia, puedes presionar el botón **'Pedir por WhatsApp'** en cualquiera de nuestras recomendaciones o escribirnos directamente al **+57 314 7551411**. Aceptamos transferencias Bancolombia, Nequi, Daviplata y envíos nacionales.",
         originalidad: "✨ Todas nuestras fragancias son **100% originales, selladas y garantizadas** en su caja original, importadas directamente de las casas perfumeras más prestigiosas del mundo árabe y de diseñador."
     };
@@ -924,7 +924,7 @@ var AuraIA = (function() {
                     ? (typeof EventosManager !== 'undefined' && EventosManager.calcularPrecioConDescuento ? EventosManager.calcularPrecioConDescuento(priceI) : Math.round(priceI * (1 - discI.pct / 100)))
                     : priceI;
                 var priceStrI = finalPriceI ? '$' + finalPriceI.toLocaleString('es-CO') : 'Consultar';
-                var waI = encodeURIComponent('¡Hola Manizales Perfumería! Me interesa el ' + targetProd.nombre + ' (' + (targetProd.marca || '') + ') que me recomendó Aura AI. ¿Podría darme más información para comprarlo?');
+                var waI = encodeURIComponent('¡Hola Perfumería Manizales! Me interesa el ' + targetProd.nombre + ' (' + (targetProd.marca || '') + ') que me recomendó Aura AI. ¿Podría darme más información para comprarlo?');
                 return {
                     type: 'single_product',
                     content: "✨ **¡Excelente elección! " + targetProd.nombre + "** es una de las fragancias más apreciadas de nuestro catálogo.\n\n" +
@@ -942,7 +942,7 @@ var AuraIA = (function() {
             var waPago = encodeURIComponent('Hola, me gustaría saber los métodos de pago disponibles' + (prodPago ? (' para el ' + prodPago.nombre) : '') + '.');
             return {
                 type: 'text',
-                content: "💳 **Medios de Pago en Manizales Perfumería:**\n\n" +
+                content: "💳 **Medios de Pago en Perfumería Manizales:**\n\n" +
                          "Aceptamos múltiples formas de pago 100% seguras:\n\n" +
                          "• 📱 **Nequi** — Envío de dinero digital\n" +
                          "• 📱 **Daviplata** — Billetera móvil Davivienda\n" +
@@ -988,7 +988,7 @@ var AuraIA = (function() {
                 state.currentFocusProduct = topNew[0];
                 return {
                     type: 'recommendation',
-                    content: "🆕 **Últimas Novedades de Manizales Perfumería:**\n\n" +
+                    content: "🆕 **Últimas Novedades de Perfumería Manizales:**\n\n" +
                              "Estas fragancias acaban de llegar y son opciones excelentes:" +
                              (genderNew ? ' (filtrado para **' + genderNew + '**)' : '') + "",
                     products: topNew
@@ -1030,7 +1030,7 @@ var AuraIA = (function() {
                 type: 'text',
                 content: "🎁 **Presentación y Empaque de Nuestras Fragancias:**\n\n" +
                          (prodEmp ? "**" + prodEmp.nombre + "** viene en su caja original sellada de fábrica, con atomizador de lujo incluido. " : "") +
-                         "Cada fragancia de Manizales Perfumería llega:\n\n" +
+                         "Cada fragancia de Perfumería Manizales llega:\n\n" +
                          "• 📦 **Caja original sellada de fábrica** — sin abrir, con todos sus sellos de seguridad.\n" +
                          "• ✨ **Atomizador de lujo incluido** — presentación premium lista para regalar.\n" +
                          "• 🛡️ **Protección de burbuja** — las botellas van empacadas en caja rígida protectora para envíos.\n" +
@@ -1075,7 +1075,7 @@ var AuraIA = (function() {
             var waH = encodeURIComponent('Hola, quiero saber sus horarios de atención.');
             return {
                 type: 'text',
-                content: "🕐 **Horarios de Atención Manizales Perfumería:**\n\n" +
+                content: "🕐 **Horarios de Atención Perfumería Manizales:**\n\n" +
                          "Atendemos con total disponibilidad:\n\n" +
                          "• 📅 **Lunes a Sábado:** 9:00 AM – 8:00 PM\n" +
                          "• 📅 **Domingos y festivos:** 10:00 AM – 6:00 PM\n" +
@@ -1106,7 +1106,7 @@ var AuraIA = (function() {
                 afProd = afCat.filter(function(p) { return p.id === state.lastRecommendedIds[0]; })[0] || null;
             }
             if (afProd) {
-                var afWa = encodeURIComponent('¡Hola Manizales Perfumería! Aura AI me recomendó el ' + afProd.nombre + ' (' + (afProd.marca || '') + ') y me interesa comprarlo. ¿Me pueden dar más información?');
+                var afWa = encodeURIComponent('¡Hola Perfumería Manizales! Aura AI me recomendó el ' + afProd.nombre + ' (' + (afProd.marca || '') + ') y me interesa comprarlo. ¿Me pueden dar más información?');
                 return {
                     type: 'single_product',
                     content: "¡Perfecto! Con mucho gusto. ✨\n\nPara proceder con tu pedido de **" + afProd.nombre + "** y coordinar la entrega en tu ciudad, solo toca el botón **'Pedir'** o escríbenos directamente:\n\n📲 [Confirmar pedido por WhatsApp →](https://wa.me/573147551411?text=" + afWa + ")",
@@ -1127,7 +1127,7 @@ var AuraIA = (function() {
         if (isPureGreeting(text)) {
             return {
                 type: 'text',
-                content: "¡Hola! Muy bien, gracias por preguntar. ✨ Un verdadero placer saludarte y darte la bienvenida a **Manizales Perfumería**.\n\n" +
+                content: "¡Hola! Muy bien, gracias por preguntar. ✨ Un verdadero placer saludarte y darte la bienvenida a **Perfumería Manizales**.\n\n" +
                          "Soy **Aura**, tu Sommelier de Fragancias e Inteligencia Artificial personal. Cuéntame con total tranquilidad: ¿qué tipo de perfume tienes en mente hoy o para qué ocasión te gustaría encontrar tu fragancia ideal? ✦"
             };
         }
@@ -1142,7 +1142,7 @@ var AuraIA = (function() {
             return {
                 type: 'text',
                 content: "🛡️ **¡Totalmente seguras y 100% garantizadas!**\n\n" +
-                         "En **Manizales Perfumería** tu compra y tu dinero están completamente protegidos:\n\n" +
+                         "En **Perfumería Manizales** tu compra y tu dinero están completamente protegidos:\n\n" +
                          "• **Atención 1 a 1 y transparencia:** Todo el proceso de compra se atiende directamente vía WhatsApp con un asesor real que te envía fotos y videos reales de tu perfume antes del despacho.\n" +
                          "• **100% Originales y sellados:** Cada fragancia viene en su caja original sellada de fábrica con batch code y sello de garantía.\n" +
                          "• **Entregas locales y a nivel nacional:** En **Manizales, Villamaría y Neira** realizamos entregas el mismo día con opción de pago contraentrega en áreas autorizadas, y despachos seguros a toda Colombia coordinados directamente por WhatsApp.\n\n" +
@@ -1434,7 +1434,7 @@ var AuraIA = (function() {
         if (containsAny(text, ['originales', 'original', 'replica', 'replicas', 'copia', 'copias', 'garantia', 'sellado', 'sellados', 'autentico', 'autenticos', 'son originales', 'es original', 'batch code', 'procedencia'])) {
             return {
                 type: 'text',
-                content: "✨ **Garantía de Autenticidad 100% Manizales Perfumería:**\n\n" +
+                content: "✨ **Garantía de Autenticidad 100% Perfumería Manizales:**\n\n" +
                          "• Todas nuestras fragancias son **100% originales, selladas de fábrica y garantizadas** en su empaque y caja de lujo original.\n" +
                          "• Trabajamos con importación directa de las casas perfumeras más prestigiosas del mundo árabe y de diseñador (Lattafa, Afnan, Armaf, Maison Alhambra, etc.).\n" +
                          "• **Cero réplicas:** Solo calidad premium y total fijación en piel.\n\n" +
@@ -1459,7 +1459,7 @@ var AuraIA = (function() {
         if (containsAny(text, ['tienda fisica', 'donde queda la tienda', 'donde estan', 'donde se encuentran', 'direccion de la tienda', 'tienen local', 'donde los visito'])) {
             return {
                 type: 'text',
-                content: "📍 **Ubicación y Cobertura de Manizales Perfumería:**\n\n" +
+                content: "📍 **Ubicación y Cobertura de Perfumería Manizales:**\n\n" +
                          "Atendemos con asesoría personalizada y entregas directas en el Eje Cafetero:\n" +
                          "• **Domicilios express:** Manizales, Villamaría y Neira.\n" +
                          "• **Envíos nacionales:** Despachamos a toda Colombia de forma 100% segura.\n" +
@@ -1480,7 +1480,7 @@ var AuraIA = (function() {
         if (containsAny(text, ['quien eres', 'como te llamas', 'que eres', 'que haces'])) {
             return {
                 type: 'text',
-                content: "Soy **Aura**, la Sommelier de Perfumería e Inteligencia Artificial de **Manizales Perfumería**. ✦\n\n" +
+                content: "Soy **Aura**, la Sommelier de Perfumería e Inteligencia Artificial de **Perfumería Manizales**. ✦\n\n" +
                          "Mi misión es ayudarte a encontrar tu aroma firma ideal, desglosar notas olfativas de salida, corazón y fondo, aconsejarte según la ocasión o el clima, y guiarte en tu pedido."
             };
         }
@@ -1530,7 +1530,7 @@ var AuraIA = (function() {
         if (containsAny(text, ['envio', 'envios', 'domicilio', 'domicilios', 'neira', 'villamaria', 'manizales', 'cuanto tarda', 'cuanto demora', 'cuando llega', 'costo de envio'])) {
             return {
                 type: 'text',
-                content: "📍 **Cobertura y Domicilios Manizales Perfumería:**\n\n" +
+                content: "📍 **Cobertura y Domicilios Perfumería Manizales:**\n\n" +
                          "• **Domicilios locales express:** Entregas el mismo día en **Manizales, Villamaría y Neira**.\n" +
                          "• **Envíos nacionales:** Despachamos a **toda Colombia** de forma 100% segura con seguimiento directo por WhatsApp.\n" +
                          "• **Embalaje protector:** Todas las botellas van en caja protectora con amortiguación para garantizar que lleguen en perfecto estado.\n\n" +
@@ -1671,7 +1671,7 @@ var AuraIA = (function() {
                 type: 'recommendation',
                 content: activeDiscount.hasDiscount 
                     ? "🎉 ¡Estás de suerte! Actualmente tenemos activo el evento de **" + activeDiscount.name + "** con un **" + activeDiscount.pct + "% de descuento en todas nuestras fragancias**.\n\nAquí tienes algunas de las opciones más aclamadas con el descuento aplicado:"
-                    : "💎 En **Manizales Perfumería** mantenemos los mejores precios directos en perfumería árabe y de diseñador. Aquí tienes opciones destacadas con excelente relación calidad-precio:",
+                    : "💎 En **Perfumería Manizales** mantenemos los mejores precios directos en perfumería árabe y de diseñador. Aquí tienes opciones destacadas con excelente relación calidad-precio:",
                 products: promoProducts
             };
         }
@@ -1890,7 +1890,7 @@ var AuraIA = (function() {
         var oldPriceFormatted = (discount.hasDiscount && p.precio) ? '<span class="aura-card__old-price">$' + p.precio.toLocaleString('es-CO') + '</span>' : '';
         var discountTag = discount.hasDiscount ? '<span class="aura-card__discount-tag">-' + discount.pct + '%</span>' : '';
 
-        var waMessage = encodeURIComponent("¡Hola Manizales Perfumería! El Sommelier AI me recomendó *" + p.nombre + "* (" + (p.marca || '') + ") y deseo más información para comprarlo.");
+        var waMessage = encodeURIComponent("¡Hola Perfumería Manizales! El Sommelier AI me recomendó *" + p.nombre + "* (" + (p.marca || '') + ") y deseo más información para comprarlo.");
         var waUrl = "https://wa.me/573147551411?text=" + waMessage;
 
         return (
@@ -1901,7 +1901,7 @@ var AuraIA = (function() {
                     discountTag +
                 '</div>' +
                 '<div class="aura-card__info">' +
-                    '<span class="aura-card__brand">' + (p.marca || 'Manizales Perfumería') + '</span>' +
+                    '<span class="aura-card__brand">' + (p.marca || 'Perfumería Manizales') + '</span>' +
                     '<h4 class="aura-card__title">' + p.nombre + '</h4>' +
                     '<span class="aura-card__scent">' + (p.tipo_olor || 'Exclusivo') + '</span>' +
                     '<div class="aura-card__price-row">' +
@@ -2026,6 +2026,13 @@ var AuraIA = (function() {
 
         if (win && launcher) {
             if (state.isOpen) {
+                // Iniciar IA avanzada solo bajo demanda cuando el usuario abre el chat
+                if (typeof AuraAIEngine !== 'undefined' && !AuraAIEngine.isReady() && !AuraAIEngine.isLoading()) {
+                    var esMovil = ('ontouchstart' in window) || window.innerWidth <= 768;
+                    if (!esMovil) {
+                        AuraAIEngine.init();
+                    }
+                }
                 win.classList.add('aura-window--open');
                 win.setAttribute('aria-hidden', 'false');
                 launcher.classList.add('aura-launcher--active');
