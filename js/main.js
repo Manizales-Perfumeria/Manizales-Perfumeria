@@ -52,8 +52,13 @@ function showView(viewId) {
         if (li) li.style.display = id === viewId ? 'none' : '';
     });
 
-    // Scroll to top of page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to top - en móvil usar scroll instantáneo para evitar jank en iOS
+    var esMobileScroll = ('ontouchstart' in window) || window.innerWidth <= 768;
+    if (esMobileScroll) {
+        window.scrollTo(0, 0);
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     // Re-renderizar sección activa con contexto correcto
     if (viewId === 'nuevos') {

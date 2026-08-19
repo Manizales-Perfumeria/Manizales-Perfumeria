@@ -767,3 +767,66 @@ body.aura-chat-active #header {
         border-bottom: none;
     }
 }
+
+/* === OPTIMIZACIONES DE RENDIMIENTO MÓVIL — AURA AI === */
+@media (hover: none) and (pointer: coarse) {
+    /* Eliminar backdrop-filter en toda la ventana del asistente (muy costoso en iOS) */
+    .aura-window {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(20, 13, 30, 0.97) !important;
+    }
+    .aura-header {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(28, 20, 40, 0.98) !important;
+    }
+    .aura-footer {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(24, 16, 35, 0.98) !important;
+    }
+    .aura-message--aura .aura-msg-bubble {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(32, 22, 44, 0.97) !important;
+    }
+    .aura-launcher__tooltip {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(18, 13, 24, 0.97) !important;
+    }
+
+    /* Desactivar animaciones de pulso en móvil */
+    .aura-avatar-glow {
+        animation: none !important;
+        opacity: 0.4;
+    }
+    .aura-launcher__glow {
+        animation: none !important;
+        opacity: 0.3;
+    }
+    .aura-status-dot--ai {
+        animation: none !important;
+    }
+
+    /* Reducir box-shadows complejas */
+    .aura-window {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
+    }
+    .aura-launcher {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Animación de entrada del mensaje simplificada en móvil */
+    .aura-message {
+        animation: msgFadeInMobile 0.2s ease !important;
+    }
+}
+
+@keyframes msgFadeInMobile {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+}

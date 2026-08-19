@@ -1,5 +1,5 @@
 /* ========================================
-   MANIZALES PERFUMERÍA - ESTILOS
+   PERFUMERÍA MANIZALES - ESTILOS
    ======================================== */
 
 /* === VARIABLES === */
@@ -1367,9 +1367,8 @@ button {
         padding: 0 16px;
     }
     
-    .products-grid {
-        grid-template-columns: 1fr;
-    }
+    /* NO se sobrescribe products-grid aquí: el bloque @media(max-width:768px)
+       ya establece repeat(2,1fr) y ese valor debe conservarse en móvil */
     
     .category__filters {
         gap: 8px;
@@ -2887,7 +2886,7 @@ button {
 
     .search-bar__input {
         font-size: 14px;
-        padding: 12px 40px 12px 16px;
+        padding: 12px 40px 12px 44px;
     }
 
     .section {
@@ -3064,8 +3063,10 @@ button {
 
 /* === MUY PEQUEÑO (max 360px) === */
 @media (max-width: 360px) {
+    /* En pantallas de 360px o menos se mantiene 2 columnas compactas */
     .products-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
     .hero__title-line {
@@ -3077,11 +3078,15 @@ button {
     }
 
     .product-card__name {
-        font-size: 15px;
+        font-size: 13px;
     }
 
     .modal__name {
         font-size: 18px;
+    }
+
+    .product-card__content {
+        padding: 8px;
     }
 }
 
@@ -3135,3 +3140,178 @@ button {
     line-height: 1.5;
 }
 
+/* ============================================================
+   OPTIMIZACIONES DE RENDIMIENTO MÓVIL
+   Reduce carga de GPU/CPU en iOS y Android para evitar lag.
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Deshabilitar backdrop-filter costoso en móvil */
+    .header {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.97);
+    }
+    .header.scrolled {
+        background: rgba(255, 255, 255, 0.99);
+    }
+
+    /* Reducir transiciones en tarjetas */
+    .product-card {
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .product-card:hover {
+        transform: none;
+    }
+    .product-card:hover .product-card__image img {
+        transform: none;
+    }
+
+    /* Imagen sin transición en móvil para evitar repaints */
+    .product-card__image img {
+        transition: none;
+    }
+
+    /* Simplificar animación de vista */
+    .view[data-active="true"] {
+        animation: viewFadeInMobile 0.25s ease both;
+    }
+
+    /* Canvas fijo: contener el área de render */
+    #seasonal-canvas {
+        contain: strict;
+    }
+
+    /* No forzar will-change en el header móvil */
+    .header {
+        will-change: auto;
+    }
+
+    /* Reducir complejidad de sombra en hover */
+    .product-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Deshabilitar pulsación del badge de descuento en móvil */
+    .product-card__badge--discount {
+        animation: none;
+    }
+
+    /* Scroll reveal sin delay en móvil para que aparezcan más rápido */
+    .product-card.reveal {
+        transition-delay: 0s !important;
+    }
+
+    /* Simplificar reveal */
+    .reveal {
+        transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    /* Contener vistas para evitar reflows */
+    .view {
+        contain: layout style;
+    }
+
+    /* Reducir padding del filtro */
+    .filter-panel {
+        padding: 14px;
+        margin: 0 0 20px;
+    }
+}
+
+@keyframes viewFadeInMobile {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* === DESACTIVAR ANIMACIONES PESADAS EN MÓVIL === */
+@media (max-width: 768px) {
+    /* Aura AI: backdrop-filter muy costoso en iOS */
+    .aura-launcher {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    .aura-launcher__glow {
+        animation: none;
+        opacity: 0.5;
+    }
+
+    /* Decoraciones hero sin animación */
+    .hero__decos .hero-deco {
+        animation: none !important;
+    }
+
+    /* Sombra única en el botón WhatsApp */
+    .whatsapp-float {
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+    }
+
+    /* Quitar transform en hover de botones (táctil no tiene hover real) */
+    .btn:hover,
+    .product-card__details-btn:hover,
+    .featured-card__btn:hover,
+    .seasonal-section__more-btn:hover {
+        transform: none;
+    }
+
+    /* Modal backdrop simple */
+    .modal__overlay {
+        background: rgba(0, 0, 0, 0.75);
+    }
+}
+
+/* === OPTIMIZACIÓN ESPECÍFICA iOS / Touch devices === */
+@media (hover: none) and (pointer: coarse) {
+    /* En pantallas táctiles, los :hover no deben disparar transformaciones */
+    .product-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+        border-color: rgba(0, 0, 0, 0.04);
+    }
+    .btn:hover,
+    .product-card__details-btn:hover,
+    .modal__action-btn--whatsapp:hover,
+    .seasonal-section__more-btn:hover {
+        transform: none;
+    }
+
+    /* Decoraciones SVG sin animación en táctil */
+    .hero-deco {
+        animation: none !important;
+    }
+
+    /* Quitar blur del header en iOS para mejorar FPS */
+    .header {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+    }
+
+    /* Desactivar el pulso del botón de IA en táctil */
+    .aura-launcher__glow {
+        animation: none !important;
+        opacity: 0.4;
+    }
+
+    /* Deshabilitar scroll-behavior smooth en iOS para evitar jank */
+    html {
+        scroll-behavior: auto;
+    }
+
+    /* Transiciones mínimas en toda la UI táctil */
+    .product-card,
+    .product-card__image img,
+    .btn,
+    .nav__link,
+    .modal__close {
+        transition-duration: 0.1s !important;
+    }
+
+    /* Aura window sin backdrop blur en iOS */
+    .aura-window,
+    .aura-footer,
+    .aura-header {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+}

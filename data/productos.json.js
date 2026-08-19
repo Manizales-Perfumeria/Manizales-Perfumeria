@@ -2751,37 +2751,6 @@ window.__CATALOGO_PRODUCTOS = [
         "genero":  "hombre"
     },
     {
-        "id":  107,
-        "nombre":  "Eau de Cartier",
-        "marca":  "Cartier",
-        "descripcion":  "La versión concentrada de la elegante Eau de Cartier.",
-        "descripcion_corta":  "Elegancia concentrada con bergamota y vetiver.",
-        "precio":  120000,
-        "precio_anterior":  null,
-        "imagen":  "Perfumes Hombre/eau-de-cartier.jpg",
-        "categoria":  "hombre",
-        "tipo_olor":  "amaderado",
-        "notas":  "Bergamota, lavanda, pimienta, vetiver, ámbar",
-        "notas_salida":  "Bergamota, lavanda, pimienta",
-        "notas_corazon":  "Lavanda, flores, especias",
-        "notas_fondo":  "Vetiver, ámbar, almizcle, cedro",
-        "emoji":  "💎",
-        "en_promocion":  false,
-        "destacado":  false,
-        "activo":  true,
-        "colores":  {
-                        "principal":  "#8a1a1a",
-                        "secundario":  "#b83a3a",
-                        "acento":  "#6a0a0a",
-                        "fondo":  "#f0d0d0"
-                    },
-        "transmite":  "Edición noir, elegancia oscura, distinción extrema",
-        "ideal_para":  "Eventos exclusivos, uso nocturno",
-        "duracion":  "Larga (8+ horas)",
-        "intensidad":  "Alta",
-        "genero":  "hombre"
-    },
-    {
         "id":  299,
         "nombre":  "Pasha de Cartier",
         "marca":  "Cartier",

@@ -10,7 +10,9 @@ var Animaciones = (function() {
     var pausado = false;
     var animFrameId = null;
     var ultimoTiempo = 0;
-    var FPS_OBJETIVO = 60;
+    // En móvil (pantalla ≤768px o táctil) bajar a 30 FPS para reducir carga GPU
+    var esMobile = (window.innerWidth <= 768) || ('ontouchstart' in window);
+    var FPS_OBJETIVO = esMobile ? 30 : 60;
     var intervaloFrame = 1000 / FPS_OBJETIVO;
     var acumulador = 0;
     var resizeHandler = null;
@@ -914,11 +916,18 @@ var Animaciones = (function() {
         detener();
 
         if (!iniciarCanvas()) { console.warn('[Animaciones] Canvas no encontrado'); return; }
-        console.log('[Animaciones] Iniciando:', tipo, opciones);
+
+        // Detectar si es móvil para reducir partículas y mejorar rendimiento
+        esMobile = (window.innerWidth <= 768) || ('ontouchstart' in window);
+        FPS_OBJETIVO = esMobile ? 30 : 60;
+        intervaloFrame = 1000 / FPS_OBJETIVO;
+
         corriendo = true;
         pausado = false;
 
-        var cantidad = Math.min((opciones && opciones.cantidad) || 12, 30);
+        // En móvil reducir la cantidad a la mitad (máx 15, mín 2)
+        var cantidadBase = Math.min((opciones && opciones.cantidad) || 12, 30);
+        var cantidad = esMobile ? Math.max(2, Math.floor(cantidadBase / 2)) : cantidadBase;
         var color = (opciones && opciones.color) || '#ffffff';
 
         switch (tipo) {
@@ -928,7 +937,8 @@ var Animaciones = (function() {
             case 'bats':
                 animacionActual = {
                     principal: new Murcielagos(cantidad),
-                    extras: [new AranasCaminando(3)]
+                    // En móvil quitar arañas para reducir carga de dibujo
+                    extras: esMobile ? [] : [new AranasCaminando(3)]
                 };
                 break;
             case 'hearts':
@@ -945,7 +955,6 @@ var Animaciones = (function() {
                 break;
         }
 
-        console.log('[Animaciones] Canvas:', canvas.width, 'x', canvas.height, 'Clase:', canvas.className);
         canvas.classList.add('active');
         resizeCanvas();
         ultimoTiempo = performance.now();

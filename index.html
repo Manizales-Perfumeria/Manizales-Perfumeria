@@ -2,12 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#ffffff">
     <meta name="description" content="Perfumería Manizales - Encuentra tu fragancia ideal. Perfumes para hombre y mujer. Domicilios en Neira, Villamaría, Manizales y envíos a todo el país.">
     <title>Perfumería Manizales | Fragancias para Hombre y Mujer</title>
+    <!-- Preconectar fuentes para carga más rápida -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Cargar fuentes de forma no bloqueante con display=swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/eventos.css">
     <link rel="stylesheet" href="css/asistente-ia.css">
@@ -541,7 +548,8 @@
     <script src="js/emojis-flotantes.js"></script>
     <script src="js/eventos.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/asistente-ia.js"></script>
-    <script src="js/aura-ai-engine.js"></script>
+    <!-- Asistente IA y motor de IA: se cargan diferidos para no bloquear el render inicial en móvil -->
+    <script src="js/asistente-ia.js" defer></script>
+    <script src="js/aura-ai-engine.js" defer></script>
 </body>
 </html>
