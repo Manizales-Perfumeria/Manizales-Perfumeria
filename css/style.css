@@ -2897,6 +2897,10 @@ body.modal-open .whatsapp-float {
         background: var(--btn-color, #C9A96E);
         color: #1a1a1a;
         border: none;
+        cursor: pointer;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
     .modal {
         padding: 0;
         z-index: 2147483640;
@@ -2961,15 +2965,16 @@ body.modal-open .whatsapp-float {
 
     .modal__image-section {
         position: relative;
-        min-height: 240px;
-        max-height: 300px;
-        padding: max(40px, calc(env(safe-area-inset-top) + 20px)) 20px 14px;
+        min-height: auto;
+        max-height: none;
+        padding: max(36px, calc(env(safe-area-inset-top) + 16px)) 16px 14px;
         background: linear-gradient(180deg, var(--product-bg, #f5f5f7) 0%, #ffffff 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         border-radius: 0;
+        overflow: visible;
         flex-shrink: 0;
     }
 
@@ -2979,17 +2984,18 @@ body.modal-open .whatsapp-float {
 
     .modal__image-container {
         width: 100%;
-        max-width: 200px;
-        max-height: 200px;
+        max-width: 210px;
+        max-height: 210px;
         aspect-ratio: 1;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0 auto;
     }
 
     .modal__image {
         max-width: 100%;
-        max-height: 190px;
+        max-height: 200px;
         width: auto;
         height: auto;
         object-fit: contain;
@@ -2997,15 +3003,26 @@ body.modal-open .whatsapp-float {
     }
 
     .modal__badges {
-        margin-top: 12px;
+        margin-top: 10px;
+        margin-bottom: 4px;
         gap: 6px;
+        display: flex;
         flex-wrap: wrap;
         justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 5;
     }
 
     .modal__badge {
-        padding: 4px 10px;
+        padding: 5px 12px;
         font-size: 11px;
+        font-weight: 700;
+        border-radius: 20px;
+        background: #18181b;
+        color: #ffffff;
+        line-height: 1.2;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
 
     .modal__info-section {
