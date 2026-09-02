@@ -9,7 +9,9 @@ let products = [];
 let currentView = 'inicio';
 
 // === VIEW NAVIGATION SYSTEM ===
-function showView(viewId) {
+function showView(viewId, updateHistory) {
+    if (updateHistory === undefined) updateHistory = true;
+
     // Hide all views
     const allViews = document.querySelectorAll('.view');
     allViews.forEach(function(v) {
@@ -35,6 +37,12 @@ function showView(viewId) {
 
     // Track current view
     currentView = viewId;
+
+    if (updateHistory) {
+        try {
+            history.pushState({ type: 'view', view: viewId }, '', '#' + viewId);
+        } catch(e) {}
+    }
 
     // Update active nav link
     const allLinks = document.querySelectorAll('.nav__link');
@@ -121,7 +129,8 @@ const ClickCounter = {
 };
 
 // === PRODUCT MODAL ===
-function openProductModal(productId) {
+function openProductModal(productId, updateHistory) {
+    if (updateHistory === undefined) updateHistory = true;
     const product = products.find(function(p) { return p.id === productId; });
     if (!product) return;
     
@@ -132,7 +141,7 @@ function openProductModal(productId) {
         principal: '#C9A96E',
         secundario: '#E8D5B7',
         acento: '#A68B4B',
-        fonda: '#FAF9F6'
+        fondo: '#FAF9F6'
     };
     
     var activeEventClass = '';
@@ -168,8 +177,8 @@ function openProductModal(productId) {
         <div class="modal${activeEventClass}" id="product-modal" style="--product-color: ${colors.principal}; --product-light: ${colors.secundario}; --product-accent: ${colors.acento}; --product-bg: ${colors.fondo};">
             <div class="modal__overlay" onclick="closeProductModal()"></div>
             <div class="modal__content" style="${activeEventStyle}">
-                <button class="modal__close" onclick="closeProductModal()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="modal__close" onclick="closeProductModal()" aria-label="Cerrar detalles del producto">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -257,6 +266,13 @@ function openProductModal(productId) {
     // Add modal to body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
+
+    if (updateHistory) {
+        try {
+            history.pushState({ type: 'modal', productId: productId }, '', '#producto-' + productId);
+        } catch(e) {}
+    }
     
     // Track click
     const whatsappBtn = document.querySelector('.modal__action-btn--whatsapp');
@@ -267,14 +283,21 @@ function openProductModal(productId) {
     }
 }
 
-function closeProductModal() {
+function closeProductModal(updateHistory) {
+    if (updateHistory === undefined) updateHistory = true;
     const modal = document.getElementById('product-modal');
     if (modal) {
         modal.classList.add('modal--closing');
         setTimeout(function() {
             modal.remove();
             document.body.style.overflow = '';
-        }, 250);
+            document.body.classList.remove('modal-open');
+        }, 220);
+    }
+    if (updateHistory && window.location.hash.startsWith('#producto-')) {
+        try {
+            history.back();
+        } catch(e) {}
     }
 }
 
@@ -432,16 +455,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const navMenu = document.getElementById('nav-menu');
     const navOverlay = document.getElementById('nav-overlay');
 
-    function openMobileNav() {
+    function openMobileNav(updateHistory) {
+        if (updateHistory === undefined) updateHistory = true;
         if (navMenu) navMenu.classList.add('active');
         if (navOverlay) navOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        if (updateHistory) {
+            try {
+                history.pushState({ type: 'menu' }, '', '#menu');
+            } catch(e) {}
+        }
     }
 
-    function closeMobileNav() {
+    function closeMobileNav(updateHistory) {
+        if (updateHistory === undefined) updateHistory = true;
         if (navMenu) navMenu.classList.remove('active');
         if (navOverlay) navOverlay.classList.remove('active');
         document.body.style.overflow = '';
+        if (updateHistory && window.location.hash === '#menu') {
+            try {
+                history.back();
+            } catch(e) {}
+        }
     }
 
     if (navToggle) {
@@ -468,6 +503,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // === GESTIÓN GLOBAL DE HISTORIAL / BOTONES DEL CELULAR ===
+    initHistoryNavigation();
+
     // === DELEGACIÓN GLOBAL DE EVENTOS DE TARJETAS ===
     initCardEventDelegation();
 
@@ -475,6 +513,66 @@ document.addEventListener('DOMContentLoaded', function() {
     loadProducts();
 
 });
+
+// === INICIALIZACIÓN DE NAVEGACIÓN Y HISTORIAL DE NAVEGADOR ===
+function initHistoryNavigation() {
+    var validViews = ['inicio', 'quienes-somos', 'nuevos', 'hombre', 'mujer', 'unisex', 'ubicacion'];
+    var hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+
+    if (hash && validViews.indexOf(hash) !== -1) {
+        try {
+            history.replaceState({ type: 'view', view: hash }, '', '#' + hash);
+        } catch(e) {}
+        if (hash !== 'inicio') {
+            showView(hash, false);
+        }
+    } else {
+        try {
+            history.replaceState({ type: 'view', view: 'inicio' }, '', '#inicio');
+        } catch(e) {}
+    }
+
+    window.addEventListener('popstate', function(e) {
+        // 1. Si hay modal de producto abierto, cerrarlo sin navegar fuera
+        var modal = document.getElementById('product-modal');
+        if (modal) {
+            closeProductModal(false);
+            return;
+        }
+
+        // 2. Si el asistente de IA está abierto, cerrarlo
+        if (document.body.classList.contains('aura-chat-active')) {
+            if (typeof AuraAI !== 'undefined' && AuraAI.toggle) {
+                AuraAI.toggle(false);
+                return;
+            }
+        }
+
+        // 3. Si el menú móvil está abierto, cerrarlo
+        var navMenu = document.getElementById('nav-menu');
+        if (navMenu && navMenu.classList.contains('active')) {
+            var navOverlay = document.getElementById('nav-overlay');
+            if (navMenu) navMenu.classList.remove('active');
+            if (navOverlay) navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            return;
+        }
+
+        // 4. Navegar a la vista correspondiente
+        if (e.state && e.state.view) {
+            showView(e.state.view, false);
+        } else if (window.location.hash) {
+            var h = window.location.hash.replace('#', '');
+            if (validViews.indexOf(h) !== -1) {
+                showView(h, false);
+            } else {
+                showView('inicio', false);
+            }
+        } else {
+            showView('inicio', false);
+        }
+    });
+}
 
 // === RENDER FEATURED PRODUCTS ===
 function renderFeaturedProducts() {
