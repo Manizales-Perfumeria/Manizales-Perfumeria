@@ -2902,40 +2902,52 @@ body.modal-open .whatsapp-float {
     }
 
     .modal {
-        padding: 0;
-        z-index: 2147483640;
-    }
-
-    .modal__overlay {
         position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.75);
-    }
-
-    .modal__content {
-        position: fixed;
-        inset: 0;
-        max-width: 100vw;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         width: 100vw;
         height: 100vh;
         height: 100dvh;
-        max-height: 100dvh;
+        padding: 0;
         margin: 0;
-        border-radius: 0;
-        overflow-y: auto;
+        z-index: 2147483640;
+        overflow-y: scroll;
         -webkit-overflow-scrolling: touch;
-        display: flex;
-        flex-direction: column;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+        display: block;
         background: #ffffff;
-        z-index: 2;
+    }
+
+    .modal__overlay {
+        display: none;
+    }
+
+    .modal__content {
+        position: relative;
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: #ffffff;
+        display: block;
+        overflow: visible;
+        max-height: none !important;
+        max-width: 100% !important;
+        animation: none !important;
+        transform: none !important;
     }
 
     .modal__close {
         position: fixed;
-        top: max(12px, env(safe-area-inset-top));
-        right: 12px;
-        width: 38px;
-        height: 38px;
+        top: max(14px, env(safe-area-inset-top));
+        right: 14px;
+        width: 40px;
+        height: 40px;
         background: rgba(0, 0, 0, 0.65);
         color: #ffffff;
         border: 1px solid rgba(255, 255, 255, 0.35);
@@ -2945,7 +2957,7 @@ body.modal-open .whatsapp-float {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        z-index: 60;
+        z-index: 100;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         transition: transform 0.2s ease, background 0.2s ease;
@@ -2957,14 +2969,14 @@ body.modal-open .whatsapp-float {
     }
 
     .modal__grid {
-        display: flex;
-        flex-direction: column;
-        min-height: 100%;
+        display: block;
+        min-height: auto;
         width: 100%;
     }
 
     .modal__image-section {
         position: relative;
+        width: 100%;
         min-height: auto;
         max-height: none;
         padding: max(36px, calc(env(safe-area-inset-top) + 16px)) 16px 14px;
@@ -2976,6 +2988,7 @@ body.modal-open .whatsapp-float {
         border-radius: 0;
         overflow: visible;
         flex-shrink: 0;
+        box-sizing: border-box;
     }
 
     .modal__image-section::after {
@@ -3026,11 +3039,12 @@ body.modal-open .whatsapp-float {
     }
 
     .modal__info-section {
-        padding: 18px 18px max(24px, calc(16px + env(safe-area-inset-bottom)));
+        position: relative;
+        width: 100%;
+        padding: 18px 20px max(40px, calc(24px + env(safe-area-inset-bottom)));
         background: #ffffff;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+        display: block;
+        box-sizing: border-box;
     }
 
     .modal__brand {
