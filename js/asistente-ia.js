@@ -2026,30 +2026,35 @@ var AuraIA = (function() {
 
         if (win && launcher) {
             if (state.isOpen) {
-                // Iniciar IA avanzada solo bajo demanda cuando el usuario abre el chat
-                if (typeof AuraAIEngine !== 'undefined' && !AuraAIEngine.isReady() && !AuraAIEngine.isLoading()) {
-                    var esMovil = ('ontouchstart' in window) || window.innerWidth <= 768;
-                    if (!esMovil) {
-                        AuraAIEngine.init();
-                    }
+                // Pausar animaciones canvas pesadas de fondo para garantizar 60 FPS en móvil
+                if (typeof Animaciones !== 'undefined' && Animaciones.estaActivo()) {
+                    Animaciones.pausar();
                 }
                 win.classList.add('aura-window--open');
                 win.setAttribute('aria-hidden', 'false');
                 launcher.classList.add('aura-launcher--active');
                 document.body.classList.add('aura-chat-active');
+                if (window.innerWidth <= 600) {
+                    document.body.style.overflow = 'hidden';
+                }
                 if (headerEl) headerEl.classList.add('header--hidden');
                 state.unreadCount = 0;
                 if (badge) badge.style.display = 'none';
                 setTimeout(function() {
                     var input = document.getElementById('aura-chat-input');
-                    if (input) input.focus();
+                    if (input && window.innerWidth > 600) input.focus();
                     scrollToBottom();
-                }, 150);
+                }, 100);
             } else {
+                // Reanudar animaciones canvas si estaban activas
+                if (typeof Animaciones !== 'undefined') {
+                    Animaciones.reanudar();
+                }
                 win.classList.remove('aura-window--open');
                 win.setAttribute('aria-hidden', 'true');
                 launcher.classList.remove('aura-launcher--active');
                 document.body.classList.remove('aura-chat-active');
+                document.body.style.overflow = '';
                 if (headerEl && window.pageYOffset < 150) {
                     headerEl.classList.remove('header--hidden');
                 }
@@ -2126,10 +2131,12 @@ var AuraIA = (function() {
     }
 
     function scrollToBottom() {
-        var container = document.getElementById('aura-messages-container');
-        if (container) {
-            container.scrollTop = container.scrollHeight;
-        }
+        requestAnimationFrame(function() {
+            var container = document.getElementById('aura-messages-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        });
     }
 
     function handleSubmit(e) {

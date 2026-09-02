@@ -39,14 +39,65 @@ var EventosManager = (function() {
         return { mes: d.getMonth(), dia: d.getDate() };
     }
 
+    /* Día del Amor y la Amistad en Colombia: se celebra el tercer sábado de septiembre */
+    function calcularAmorYamistad(anio) {
+        var primerDia = new Date(anio, 8, 1).getDay(); // 0 = domingo, 6 = sábado
+        var primerSabado = 1 + ((6 - primerDia + 7) % 7);
+        var tercerSabado = primerSabado + 14;
+        // Temporada activa en perfumería: desde 8 días antes (2do viernes) hasta el domingo después
+        var inicio = sumarDias({ mes: 8, dia: tercerSabado }, anio, -8);
+        var fin = sumarDias({ mes: 8, dia: tercerSabado }, anio, 1);
+        return { inicio: inicio, fin: fin };
+    }
+
+    /* Día de la Madre en Colombia: segundo domingo de mayo */
+    function calcularDiaMadre(anio) {
+        var primerDia = new Date(anio, 4, 1).getDay();
+        var primerDomingo = 1 + ((7 - primerDia) % 7);
+        var segundoDomingo = primerDomingo + 7;
+        var inicio = { mes: 4, dia: 1 };
+        var fin = sumarDias({ mes: 4, dia: segundoDomingo }, anio, 1);
+        return { inicio: inicio, fin: fin };
+    }
+
+    /* Día del Padre en Colombia: tercer domingo de junio */
+    function calcularDiaPadre(anio) {
+        var primerDia = new Date(anio, 5, 1).getDay();
+        var primerDomingo = 1 + ((7 - primerDia) % 7);
+        var tercerDomingo = primerDomingo + 14;
+        var inicio = sumarDias({ mes: 5, dia: tercerDomingo }, anio, -10);
+        var fin = sumarDias({ mes: 5, dia: tercerDomingo }, anio, 1);
+        return { inicio: inicio, fin: fin };
+    }
+
+    /* Black Friday: cuarto viernes de noviembre */
+    function calcularBlackFriday(anio) {
+        var primerDia = new Date(anio, 10, 1).getDay();
+        var primerViernes = 1 + ((5 - primerDia + 7) % 7);
+        var cuartoViernes = primerViernes + 21;
+        var inicio = sumarDias({ mes: 10, dia: cuartoViernes }, anio, -2); // Miércoles
+        var fin = sumarDias({ mes: 10, dia: cuartoViernes }, anio, 3);    // Cyber Monday
+        return { inicio: inicio, fin: fin };
+    }
+
+    /* Semana Santa / Pascua */
+    function calcularSemanaSanta(anio) {
+        var pascua = calcularDomingoPascua(anio);
+        return {
+            inicio: sumarDias(pascua, anio, -7), // Domingo de Ramos
+            fin: sumarDias(pascua, anio, 1)      // Lunes de Pascua
+        };
+    }
+
     var EVENTOS = [
-        { id:'halloween', nombre:'Halloween', emoji:'🎃', descuento: 10, fechaInicio:{mes:9,dia:15}, fechaFin:{mes:10,dia:2}, colores:{navBg:'rgba(30,10,30,0.95)',navBorder:'rgba(180,80,180,0.2)',heroGradient:'linear-gradient(135deg,#1a0a2e,#2d1b4e,#1a0a2e)',accent:'#c084fc',btnColor:'#c084fc',sectionTitle:'#7c3aed'}, aromas:['oriental','oud','especiado'], tituloSeccion:'Especial Halloween', descripcionSeccion:'Fragancias misteriosas y oscuras con 10% de descuento especial' },
-        { id:'navidad', nombre:'Navidad / Año Nuevo', emoji:'🎄', descuento: 15, fechaInicio:{mes:11,dia:1}, fechaFin:{mes:0,dia:5}, colores:{navBg:'rgba(20,10,10,0.95)',navBorder:'rgba(201,169,110,0.3)',heroGradient:'linear-gradient(135deg,#1a1a2e,#2d1b1b,#1a1a2e)',accent:'#c9a96e',btnColor:'#c9a96e',sectionTitle:'#b8860b'}, aromas:['oriental','dulce','amaderado','gourmand'], tituloSeccion:'Especial de Navidad', descripcionSeccion:'Fragancias cálidas y envolventes con 15% de descuento navideño' },
-        { id:'sanvalentin', nombre:'San Valentín', emoji:'💕', descuento: 15, fechaInicio:{mes:1,dia:1}, fechaFin:{mes:1,dia:15}, colores:{navBg:'rgba(40,10,20,0.95)',navBorder:'rgba(236,72,153,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#4a1942,#2d1520)',accent:'#ec4899',btnColor:'#ec4899',sectionTitle:'#db2777'}, aromas:['floral','dulce'], tituloSeccion:'Especial San Valentín', descripcionSeccion:'Fragancias románticas con 15% de descuento para celebrar el amor' },
-        { id:'amorYamistad', nombre:'Amor y Amistad', emoji:'💛', descuento: 15, fechaInicio:{mes:8,dia:1}, fechaFin:{mes:8,dia:25}, colores:{navBg:'rgba(35,10,30,0.95)',navBorder:'rgba(251,191,36,0.25)',heroGradient:'linear-gradient(135deg,#2a1040,#3d1535,#2a1040)',accent:'#fbbf24',btnColor:'#fbbf24',sectionTitle:'#d97706'}, aromas:['floral','dulce','frutal'], tituloSeccion:'Día del Amor y la Amistad', descripcionSeccion:'Fragancias ideales para regalar con 15% de descuento especial' },
-        { id:'diamadre', nombre:'Día de la Madre', emoji:'🌸', descuento: 15, fechaInicio:{mes:4,dia:1}, fechaFin:{mes:4,dia:15}, colores:{navBg:'rgba(40,20,25,0.95)',navBorder:'rgba(255,183,197,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#3d1a2a,#2d1520)',accent:'#FFB7C5',btnColor:'#FFB7C5',sectionTitle:'#d4627a'}, aromas:['floral','elegante'], tituloSeccion:'Especial Día de la Madre', descripcionSeccion:'Fragancias delicadas y elegantes con 15% de descuento para mamá' },
-        { id:'blackfriday', nombre:'Black Friday', emoji:'🛍️', descuento: 30, fechaInicio:{mes:10,dia:20}, fechaFin:{mes:10,dia:30}, colores:{navBg:'rgba(15,15,15,0.96)',navBorder:'rgba(234,179,8,0.35)',heroGradient:'linear-gradient(135deg,#09090b,#18181b,#09090b)',accent:'#eab308',btnColor:'#eab308',sectionTitle:'#ca8a04'}, aromas:['oriental','gourmand','amaderado','dulce'], tituloSeccion:'Ofertas Black Friday', descripcionSeccion:'¡Gran descuento del 30% en todas nuestras fragancias por Black Friday!' },
-        { id:'diapadre', nombre:'Día del Padre', emoji:'🌾', descuento: 15, fechaInicio:{mes:5,dia:1}, fechaFin:{mes:5,dia:21}, colores:{navBg:'rgba(30,25,10,0.95)',navBorder:'rgba(255,215,0,0.2)',heroGradient:'linear-gradient(135deg,#1a1a10,#2d2a15,#1a1a10)',accent:'#FFD700',btnColor:'#FFD700',sectionTitle:'#b8960a'}, aromas:['amaderado','fresco','aromatica'], tituloSeccion:'Especial Día del Padre', descripcionSeccion:'Fragancias con carácter con 15% de descuento para papá' }
+        { id:'halloween', nombre:'Halloween', emoji:'🎃', descuento: 10, fechaInicio:{mes:9,dia:18}, fechaFin:{mes:10,dia:2}, colores:{navBg:'rgba(30,10,30,0.95)',navBorder:'rgba(180,80,180,0.2)',heroGradient:'linear-gradient(135deg,#1a0a2e,#2d1b4e,#1a0a2e)',accent:'#c084fc',btnColor:'#c084fc',sectionTitle:'#7c3aed'}, aromas:['oriental','oud','especiado'], tituloSeccion:'Especial Halloween', descripcionSeccion:'Fragancias misteriosas y oscuras con 10% de descuento especial' },
+        { id:'navidad', nombre:'Navidad / Año Nuevo', emoji:'🎄', descuento: 15, fechaInicio:{mes:11,dia:1}, fechaFin:{mes:0,dia:6}, colores:{navBg:'rgba(20,10,10,0.95)',navBorder:'rgba(201,169,110,0.3)',heroGradient:'linear-gradient(135deg,#1a1a2e,#2d1b1b,#1a1a2e)',accent:'#c9a96e',btnColor:'#c9a96e',sectionTitle:'#b8860b'}, aromas:['oriental','dulce','amaderado','gourmand'], tituloSeccion:'Especial de Navidad', descripcionSeccion:'Fragancias cálidas y envolventes con 15% de descuento navideño' },
+        { id:'sanvalentin', nombre:'San Valentín', emoji:'💕', descuento: 15, fechaInicio:{mes:1,dia:7}, fechaFin:{mes:1,dia:16}, colores:{navBg:'rgba(40,10,20,0.95)',navBorder:'rgba(236,72,153,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#4a1942,#2d1520)',accent:'#ec4899',btnColor:'#ec4899',sectionTitle:'#db2777'}, aromas:['floral','dulce'], tituloSeccion:'Especial San Valentín', descripcionSeccion:'Fragancias románticas con 15% de descuento para celebrar el amor' },
+        { id:'amorYamistad', nombre:'Amor y Amistad', emoji:'💛', descuento: 15, calcularFechas: calcularAmorYamistad, colores:{navBg:'rgba(35,10,30,0.95)',navBorder:'rgba(251,191,36,0.25)',heroGradient:'linear-gradient(135deg,#2a1040,#3d1535,#2a1040)',accent:'#fbbf24',btnColor:'#fbbf24',sectionTitle:'#d97706'}, aromas:['floral','dulce','frutal'], tituloSeccion:'Día del Amor y la Amistad', descripcionSeccion:'Fragancias ideales para regalar con 15% de descuento especial' },
+        { id:'diamadre', nombre:'Día de la Madre', emoji:'🌸', descuento: 15, calcularFechas: calcularDiaMadre, colores:{navBg:'rgba(40,20,25,0.95)',navBorder:'rgba(255,183,197,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#3d1a2a,#2d1520)',accent:'#FFB7C5',btnColor:'#FFB7C5',sectionTitle:'#d4627a'}, aromas:['floral','elegante'], tituloSeccion:'Especial Día de la Madre', descripcionSeccion:'Fragancias delicadas y elegantes con 15% de descuento para mamá' },
+        { id:'blackfriday', nombre:'Black Friday', emoji:'🛍️', descuento: 30, calcularFechas: calcularBlackFriday, colores:{navBg:'rgba(15,15,15,0.96)',navBorder:'rgba(234,179,8,0.35)',heroGradient:'linear-gradient(135deg,#09090b,#18181b,#09090b)',accent:'#eab308',btnColor:'#eab308',sectionTitle:'#ca8a04'}, aromas:['oriental','gourmand','amaderado','dulce'], tituloSeccion:'Ofertas Black Friday', descripcionSeccion:'¡Gran descuento del 30% en todas nuestras fragancias por Black Friday!' },
+        { id:'diapadre', nombre:'Día del Padre', emoji:'🌾', descuento: 15, calcularFechas: calcularDiaPadre, colores:{navBg:'rgba(30,25,10,0.95)',navBorder:'rgba(255,215,0,0.2)',heroGradient:'linear-gradient(135deg,#1a1a10,#2d2a15,#1a1a10)',accent:'#FFD700',btnColor:'#FFD700',sectionTitle:'#b8960a'}, aromas:['amaderado','fresco','aromatica'], tituloSeccion:'Especial Día del Padre', descripcionSeccion:'Fragancias con carácter con 15% de descuento para papá' },
+        { id:'pascua', nombre:'Semana Santa / Pascua', emoji:'🕊️', descuento: 10, calcularFechas: calcularSemanaSanta, colores:{navBg:'rgba(35,25,40,0.95)',navBorder:'rgba(201,169,214,0.25)',heroGradient:'linear-gradient(135deg,#2a1f30,#3d2a42,#2a1f30)',accent:'#c9a9d9',btnColor:'#c9a9d9',sectionTitle:'#8a6a9e'}, aromas:['floral','fresco','amaderado'], tituloSeccion:'Especial Semana Santa', descripcionSeccion:'Fragancias sutiles y elegantes con 10% de descuento de Pascua' }
     ];
 
     var CANVAS_MAP = {
@@ -56,10 +107,11 @@ var EventosManager = (function() {
         amorYamistad: { canvas: 'hearts',   opciones: { cantidad: 6, color: '#fbbf24' } },
         diamadre:     { canvas: 'petals',   opciones: { cantidad: 7, color: '#FFB7C5' } },
         blackfriday:  { canvas: 'sparkles', opciones: { cantidad: 8, color: '#eab308' } },
-        diapadre:     { canvas: 'sparkles', opciones: { cantidad: 6, color: '#C9A96E' } }
+        diapadre:     { canvas: 'sparkles', opciones: { cantidad: 6, color: '#C9A96E' } },
+        pascua:       { canvas: 'petals',   opciones: { cantidad: 6, color: '#c9a9d9' } }
     };
 
-    var HERO_CLASSES = ['hero--halloween','hero--navidad','hero--sanvalentin','hero--amorYamistad','hero--diamadre','hero--blackfriday','hero--diapadre'];
+    var HERO_CLASSES = ['hero--halloween','hero--navidad','hero--sanvalentin','hero--amorYamistad','hero--diamadre','hero--blackfriday','hero--diapadre','hero--pascua'];
     var eventoActivo = null;
     var temporizador = null;
 
@@ -372,6 +424,15 @@ var EventosManager = (function() {
                     score = 4;
                 } else if (/bestseller|mas vendido|hype|exclusivo|lujo|icono|popular|joya/.test(full)) {
                     score = 3;
+                }
+                break;
+
+            case 'pascua':
+                // Fragancias sutiles, elegantes, frescas y limpias
+                if (/cuero pesado|tabaco negro|humo/.test(notas)) return 0;
+                var tieneAromaLimpio = /floral|fresco|amaderado|citrico/.test(tipo) || /jazmin|lirio|azahar|almizcle blanco|sandalo/.test(notas);
+                if (tieneAromaLimpio) {
+                    score = 3 + (p.destacado ? 1 : 0);
                 }
                 break;
         }

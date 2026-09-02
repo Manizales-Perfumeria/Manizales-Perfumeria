@@ -73,9 +73,13 @@ function showView(viewId) {
 
     // Close mobile menu if open
     const navMenu = document.getElementById('nav-menu');
+    const navOverlay = document.getElementById('nav-overlay');
     if (navMenu) {
         navMenu.classList.remove('active');
         document.body.style.overflow = '';
+    }
+    if (navOverlay) {
+        navOverlay.classList.remove('active');
     }
 
     // Reaplicar tema de evento al cambiar de vista
@@ -426,18 +430,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const navToggle = document.getElementById('nav-toggle');
     const navClose = document.getElementById('nav-close');
     const navMenu = document.getElementById('nav-menu');
+    const navOverlay = document.getElementById('nav-overlay');
+
+    function openMobileNav() {
+        if (navMenu) navMenu.classList.add('active');
+        if (navOverlay) navOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileNav() {
+        if (navMenu) navMenu.classList.remove('active');
+        if (navOverlay) navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 
     if (navToggle) {
-        navToggle.addEventListener('click', function() {
-            navMenu.classList.add('active');
-            document.body.style.overflow = 'hidden';
+        navToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (navMenu && navMenu.classList.contains('active')) {
+                closeMobileNav();
+            } else {
+                openMobileNav();
+            }
         });
     }
 
     if (navClose) {
-        navClose.addEventListener('click', function() {
-            navMenu.classList.remove('active');
-            document.body.style.overflow = '';
+        navClose.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeMobileNav();
+        });
+    }
+
+    if (navOverlay) {
+        navOverlay.addEventListener('click', function() {
+            closeMobileNav();
         });
     }
 

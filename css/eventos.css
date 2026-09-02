@@ -187,16 +187,14 @@ body[data-event="diapadre"] {
 }
 /* === THEMING VIA CSS VARIABLES === */
 body[data-event] .header.event-themed {
-    background: var(--event-nav-bg);
-    border-bottom-color: var(--event-nav-border);
-    /* FIX: esta transicion pisaba la de "transform" definida en style.css
-       para el efecto de ocultar/mostrar el header al hacer scroll (mayor
-       especificidad = ganaba y la dejaba sin transicion, por eso se
-       cerraba de golpe durante un evento). Se agrega transform aqui para
-       que ambas convivan. */
+    background: var(--event-nav-bg) !important;
+    border-bottom-color: var(--event-nav-border) !important;
     transition: background 0.6s ease, border-color 0.6s ease, transform 0.3s ease;
 }
 body[data-event] .nav__link { color: rgba(255,255,255,0.9); }
+body[data-event] .nav__link.active { color: var(--event-accent); }
+body[data-event] .nav__link::after { background: var(--event-accent); }
+body[data-event] .nav__toggle { color: var(--event-accent, #c9a96e) !important; }
 body[data-event] .nav__logo-name {
     color: var(--event-accent);
     text-shadow: 0 0 12px var(--event-accent);
@@ -727,8 +725,24 @@ body[data-event] .location__visual {
 
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
-    .seasonal-section { padding: 40px 0 60px; }
-    .seasonal-section__grid { grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 14px; }
+    body[data-event] .nav__menu {
+        background: var(--event-nav-bg, #181124) !important;
+        border-left: 1px solid var(--event-nav-border, rgba(255, 255, 255, 0.15)) !important;
+        box-shadow: -10px 0 40px rgba(0, 0, 0, 0.7) !important;
+    }
+    body[data-event] .nav__link {
+        color: rgba(255, 255, 255, 0.95);
+    }
+    body[data-event] .nav__link:hover,
+    body[data-event] .nav__link.active {
+        color: var(--event-accent, #ffd700);
+    }
+    body[data-event] .nav__close {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .seasonal-section { padding: 30px 0 50px; }
+    .seasonal-section__grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     #test-panel { bottom: 10px; left: 10px; max-width: 175px; }
     .test-panel__btn { padding: 6px 10px; font-size: 11px; }
     .hero-deco--web { width: 140px; }
@@ -744,4 +758,8 @@ body[data-event] .location__visual {
     .hero-deco--web-2 { width: 100px; }
     .hero-deco--spider-hang { width: 42px; height: 120px; left: 8%; }
     .hero-deco--bells { width: 60px; }
+}
+
+@media (max-width: 480px) {
+    .seasonal-section__grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
