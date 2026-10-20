@@ -53,38 +53,44 @@ var DecoracionesSVG = (function() {
             '</g>' +
             '</svg></div>' +
             '<div class="hero-deco hero-deco--pumpkin" aria-hidden="true">' +
-            '<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">' +
+            '<svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">' +
             '<defs>' +
             '<radialGradient id="pk-flame" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="30%" stop-color="#ffe066"/><stop offset="75%" stop-color="#ff9800"/><stop offset="100%" stop-color="#e65100"/></radialGradient>' +
             '<radialGradient id="pk-glow-aura" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff9800" stop-opacity="0.8"/><stop offset="50%" stop-color="#ff9800" stop-opacity="0.25"/><stop offset="100%" stop-color="#ff9800" stop-opacity="0"/></radialGradient>' +
             '</defs>' +
-            '<g transform="translate(0,0)">' +
-            '<ellipse cx="45" cy="52" rx="36" ry="24" fill="url(#pk-glow-aura)" class="pk-aura-glow"/>' +
-            '<ellipse cx="45" cy="50" rx="35" ry="28" fill="#1a0a2e" opacity="0.4"/>' +
-            '<path d="M45 22 C22 22 8 34 8 52 C8 68 24 78 45 78 C66 78 82 68 82 52 C82 34 68 22 45 22Z" fill="#110820"/>' +
-            '<path d="M27 24 C22 36 20 64 27 74" stroke="#0d0615" stroke-width="1.8" fill="none" opacity="0.6"/>' +
-            '<path d="M45 22 C43 36 43 62 45 78" stroke="#0d0615" stroke-width="1.8" fill="none" opacity="0.6"/>' +
-            '<path d="M63 24 C68 36 70 64 63 74" stroke="#0d0615" stroke-width="1.8" fill="none" opacity="0.6"/>' +
-            '<rect x="41" y="8" width="8" height="16" rx="3" fill="#2a5020" transform="rotate(-8 45 16)"/>' +
-            '<path d="M49 12 C56 10 60 14 57 18" stroke="#2a5020" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
-            '<polygon points="26,38 42,38 34,52" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
-            '<polygon points="56,38 72,38 64,52" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
-            '<polygon points="46,54 52,54 49,60" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
-            '<path d="M20 66 Q28 78 36 70 Q44 64 49 70 Q54 64 62 70 Q70 78 78 66 Q64 74 49 67 Q34 74 20 66Z" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
+            // Calabaza grande de atras
+            '<g transform="translate(104,26) scale(0.82)">' +
+            '<ellipse cx="40" cy="50" rx="32" ry="21" fill="url(#pk-glow-aura)" class="pk-aura-glow" style="animation-delay:0.4s;"/>' +
+            '<path d="M40 24 C20 24 9 35 9 50 C9 64 22 73 40 73 C58 73 71 64 71 50 C71 35 60 24 40 24Z" fill="#150a24"/>' +
+            '<path d="M26 27 C22 37 21 60 26 69" stroke="#0d0615" stroke-width="1.6" fill="none" opacity="0.55"/>' +
+            '<path d="M40 24 C38 38 38 60 40 73" stroke="#0d0615" stroke-width="1.6" fill="none" opacity="0.55"/>' +
+            '<path d="M54 27 C58 37 59 60 54 69" stroke="#0d0615" stroke-width="1.6" fill="none" opacity="0.55"/>' +
+            '<path d="M37 8 C42 4 48 6 48 12 L40 13Z" fill="#3a6b2a"/>' +
+            '<path d="M45 10 C51 8 55 11 52 15" stroke="#3a6b2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+            '<polygon points="24,39 37,39 30,51" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
+            '<polygon points="47,39 60,39 53,51" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
+            '<polygon points="38,53 43,53 40.5,59" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
+            '<path d="M23 62 Q29 70 35 65 Q39 61 43 65 Q49 70 56 62 Q49 68 42 64 Q33 68 23 62Z" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
             '</g>' +
-            '<g transform="translate(80,12)">' +
-            '<ellipse cx="40" cy="50" rx="30" ry="20" fill="url(#pk-glow-aura)" class="pk-aura-glow" style="animation-delay:0.4s;"/>' +
-            '<ellipse cx="40" cy="48" rx="28" ry="22" fill="#1a0a2e" opacity="0.35"/>' +
-            '<path d="M40 26 C22 26 12 36 12 50 C12 62 24 70 40 70 C56 70 68 62 68 50 C68 36 58 26 40 26Z" fill="#110820"/>' +
-            '<path d="M25 28 C21 38 20 58 25 66" stroke="#0d0615" stroke-width="1.5" fill="none" opacity="0.5"/>' +
-            '<path d="M40 26 C39 38 39 54 40 70" stroke="#0d0615" stroke-width="1.5" fill="none" opacity="0.5"/>' +
-            '<path d="M55 28 C59 38 60 58 55 66" stroke="#0d0615" stroke-width="1.5" fill="none" opacity="0.5"/>' +
-            '<rect x="37" y="12" width="6" height="14" rx="2.5" fill="#2a5020" transform="rotate(-6 40 19)"/>' +
-            '<path d="M43 15 C49 13 52 16 50 19" stroke="#2a5020" stroke-width="2" fill="none" stroke-linecap="round"/>' +
-            '<polygon points="24,40 36,40 30,50" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
-            '<polygon points="48,40 60,40 54,50" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
-            '<polygon points="40,51 44,51 42,56" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
-            '<path d="M22 61 Q28 68 34 64 Q38 61 42 64 Q48 68 56 61 Q48 66 42 63 Q34 66 22 61Z" fill="url(#pk-flame)" class="pk-eye-glow" style="animation-delay:0.4s;"/>' +
+            // Calabaza grande de adelante
+            '<g transform="translate(6,8)">' +
+            '<ellipse cx="44" cy="54" rx="40" ry="27" fill="url(#pk-glow-aura)" class="pk-aura-glow"/>' +
+            '<path d="M44 22 C20 22 7 35 7 54 C7 72 24 86 44 86 C64 86 81 72 81 54 C81 35 68 22 44 22Z" fill="#150a24"/>' +
+            '<path d="M26 25 C20 38 18 68 26 80" stroke="#0d0615" stroke-width="2" fill="none" opacity="0.6"/>' +
+            '<path d="M44 22 C42 40 42 70 44 86" stroke="#0d0615" stroke-width="2" fill="none" opacity="0.6"/>' +
+            '<path d="M62 25 C68 38 70 68 62 80" stroke="#0d0615" stroke-width="2" fill="none" opacity="0.6"/>' +
+            // brillo del borde, para que se recorte bien contra el fondo oscuro
+            '<path d="M44 22 C20 22 7 35 7 54" stroke="#3b1f5c" stroke-width="1.6" fill="none" opacity="0.8"/>' +
+            '<path d="M44 22 C68 22 81 35 81 54" stroke="#3b1f5c" stroke-width="1.6" fill="none" opacity="0.8"/>' +
+            // tallo
+            '<path d="M37 5 C42 0 50 3 48 12 L41 13Z" fill="#3a6b2a"/>' +
+            '<path d="M46 8 C54 5 59 9 55 14" stroke="#3a6b2a" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+            // ojos
+            '<polygon points="25,38 41,38 33,53" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
+            '<polygon points="55,38 71,38 63,53" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
+            '<polygon points="42,56 48,56 45,63" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
+            // sonrisa dentada
+            '<path d="M19 68 Q27 78 35 71 Q41 66 47 71 Q55 78 68 66 Q56 76 46 70 Q32 77 19 68Z" fill="url(#pk-flame)" class="pk-eye-glow"/>' +
             '</g>' +
             '</svg></div>' +
             '<div class="hero-deco hero-deco--web-2" aria-hidden="true">' +
@@ -750,6 +756,15 @@ var DecoracionesSVG = (function() {
             '<defs>' + defs + '</defs>' + cuerpo + '</svg>';
     }
 
+    // Version del arbol con los bombillos mas grandes. En el celular el arbol
+    // de escritorio dejaba cada bombillo en 1 px de diametro.
+    var XM_TREE_MOVIL = XM_TREE
+        .replace(/r="4\.5"/g, 'r="7.5"')
+        .replace(/r="4"/g, 'r="6.5"')
+        .replace(/r="14"/g, 'r="21"')
+        .replace(/r="12"/g, 'r="18"')
+        .replace(/r="28"/g, 'r="38"');
+
     var HERO_SCENES_MOVIL = {
 
         /* ---------- HALLOWEEN ---------- */
@@ -784,7 +799,7 @@ var DecoracionesSVG = (function() {
                 // mansion centrada. A escala 0.9 cabe entera entre la descripcion y
                 // la tarjeta, con el tejado y la chimenea a la vista, sin tapar
                 // ni el titulo ni los botones.
-                '<g transform="translate(243,757) scale(0.9)">' +
+                '<g transform="translate(533,700) scale(1.1)">' +
                 '<g class="hw-mansion" opacity="0.97">' + HW_MANSION + '</g>' +
                 '</g>' +
                 // suelo del frente
@@ -832,7 +847,7 @@ var DecoracionesSVG = (function() {
                 '<ellipse cx="380" cy="880" rx="300" ry="300" fill="url(#xm-tree-ambient)"/>' +
                 // arbol centrado (base a y=1150)
                 '<g transform="translate(-1088,244) scale(1.2)">' +
-                '<g class="xm-tree">' + XM_TREE + '</g>' +
+                '<g class="xm-tree">' + XM_TREE_MOVIL + '</g>' +
                 '</g>' +
                 // casitas a la izquierda
                 '<g transform="translate(-39,654) scale(0.62)">' +
@@ -887,7 +902,7 @@ var DecoracionesSVG = (function() {
                 '<circle cx="650" cy="260" r="200" fill="url(#sv-orb-pink)"/>' +
                 estrellasMovil(ESTRELLAS_MOVIL, '#ffd7e8') +
 // corazon grande centrado en la banda alta (para no tapar el titulo)
-                '<g transform="translate(425,196) scale(1.1)">' +
+                '<g transform="translate(375,409) scale(1.3)">' +
                 '<circle cx="250" cy="140" r="170" fill="url(#sv-heart-glow)"/>' +
                 SV_HEART +
                 '</g>' +
@@ -961,7 +976,7 @@ var cuerpo =
                 '<circle cx="660" cy="300" r="200" fill="url(#dm-orb-pink)"/>' +
 // flor grande arriba a la derecha (la de PC esta en x=250, aqui se lleva a la
                 // esquina para no quedar detras del titulo centrado)
-                '<g transform="translate(628,214) scale(1.15)">' +
+                '<g transform="translate(700,528) scale(2)">' +
                 '<circle cx="0" cy="0" r="52" fill="url(#dm-bloom-glow)" class="flower-bloom-aura"/>' +
                 '<g fill="#FFB7C5" opacity="0.85">' +
                 '<ellipse cx="0" cy="-42" rx="22" ry="30"/><ellipse cx="0" cy="42" rx="22" ry="30"/>' +
@@ -1128,19 +1143,27 @@ var cuerpo =
         return escena();
     }
 
-    function getGuirnaldaHeader() {
-        var colors = ['#e6483a', '#39c977', '#c9a96e', '#4fb3ff', '#ffffff', '#e6483a', '#39c977', '#c9a96e', '#4fb3ff', '#ffffff', '#e6483a', '#39c977'];
+    function getGuirnaldaHeader(compacto) {
+        // En version compacta (celular) el lienzo es mas corto y los bombillos
+        // mas grandes. Con el lienzo de 1200 unidades escalado a 360 px de
+        // pantalla, cada bombillo mide 3 px: se veian como puntos de color.
+        var colors = compacto
+            ? ['#e6483a', '#39c977', '#c9a96e', '#4fb3ff', '#ffffff', '#e6483a', '#39c977']
+            : ['#e6483a', '#39c977', '#c9a96e', '#4fb3ff', '#ffffff', '#e6483a', '#39c977', '#c9a96e', '#4fb3ff', '#ffffff', '#e6483a', '#39c977'];
         var n = colors.length;
-        var svgW = 1200;
-        var svgH = 52;
-        var marginL = 280;
-        var marginR = 30;
+        var svgW = compacto ? 620 : 1200;
+        var svgH = compacto ? 60 : 52;
+        var marginL = compacto ? 130 : 280;
+        var marginR = compacto ? 16 : 30;
+        var bulbRx = compacto ? 9 : 5.5;
+        var bulbRy = compacto ? 12.5 : 7.5;
+        var haloR = compacto ? 30 : 18;
         var spacing = (svgW - marginL - marginR) / (n - 1);
 
         var cablePoints = [];
         for (var i = 0; i < n; i++) {
             var x = marginL + i * spacing;
-            var sag = 12 + Math.sin(i * 0.85) * 7;
+            var sag = (compacto ? 16 : 12) + Math.sin(i * 0.85) * (compacto ? 9 : 7);
             cablePoints.push({ x: x, y: sag });
         }
 
@@ -1169,14 +1192,14 @@ var cuerpo =
 
         for (var i = 0; i < n; i++) {
             var p = cablePoints[i];
-            var bulbY = p.y + 20;
+            var bulbY = p.y + (compacto ? 24 : 20);
             var stemTop = p.y + 1;
 
             svg += '<line x1="' + p.x + '" y1="' + stemTop + '" x2="' + p.x + '" y2="' + (bulbY - 8) + '" stroke="rgba(180,180,195,0.4)" stroke-width="1"/>';
-            svg += '<rect x="' + (p.x - 2.5) + '" y="' + (bulbY - 9) + '" width="5" height="3.5" rx="1.2" fill="rgba(130,130,145,0.5)"/>';
+            svg += '<rect x="' + (p.x - (compacto ? 4 : 2.5)) + '" y="' + (bulbY - 9) + '" width="' + (compacto ? 8 : 5) + '" height="' + (compacto ? 5 : 3.5) + '" rx="1.2" fill="rgba(130,130,145,0.5)"/>';
 
-            svg += '<circle class="bulb-halo" data-idx="' + i + '" cx="' + p.x + '" cy="' + (bulbY + 1) + '" r="18" fill="url(#glowHalo' + i + ')"/>';
-            svg += '<ellipse class="bulb-glass" data-idx="' + i + '" cx="' + p.x + '" cy="' + bulbY + '" rx="5.5" ry="7.5" fill="' + c + '"/>';
+            svg += '<circle class="bulb-halo" data-idx="' + i + '" cx="' + p.x + '" cy="' + (bulbY + 1) + '" r="' + haloR + '" fill="url(#glowHalo' + i + ')"/>';
+            svg += '<ellipse class="bulb-glass" data-idx="' + i + '" cx="' + p.x + '" cy="' + bulbY + '" rx="' + bulbRx + '" ry="' + bulbRy + '" fill="' + c + '"/>';
         }
 
         svg += '</svg>';

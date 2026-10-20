@@ -230,7 +230,10 @@ var EventosManager = (function() {
         if (!header || typeof DecoracionesSVG === 'undefined') return;
         var existing = header.querySelector('.christmas-lights-premium');
         if (existing) existing.remove();
-        header.insertAdjacentHTML('afterbegin', DecoracionesSVG.getGuirnaldaHeader());
+        // En el celular la guirnalda va en version compacta: menos bombillos
+        // pero mas grandes, que con el lienzo de escritorio quedaban de 3 px.
+        var compacto = window.innerWidth <= 768;
+        header.insertAdjacentHTML('afterbegin', DecoracionesSVG.getGuirnaldaHeader(compacto));
         setTimeout(iniciarParpadeoLuces, 50);
     }
 
