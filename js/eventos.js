@@ -101,7 +101,9 @@ var EventosManager = (function() {
     ];
 
     var CANVAS_MAP = {
-        halloween:    { canvas: 'bats',     opciones: { cantidad: 3 } },
+        // 6 murciélagos: en el celular (que divide a la mitad) quedan 3, y en
+        // gama baja 2. Con 3 en total se ve casi siempre uno solo.
+        halloween:    { canvas: 'bats',     opciones: { cantidad: 6 } },
         navidad:      { canvas: 'snow',     opciones: { cantidad: 12 } },
         sanvalentin:  { canvas: 'hearts',   opciones: { cantidad: 6, color: '#ec4899' } },
         amorYamistad: { canvas: 'hearts',   opciones: { cantidad: 6, color: '#fbbf24' } },
@@ -184,10 +186,41 @@ var EventosManager = (function() {
         container.innerHTML = DecoracionesSVG.getHeroDeco(eventId);
     }
 
+        /* La escena del hero cambia segun el ancho: en el celular se usa la version
+       vertical (760x1900) porque la panoramica de 1600x900 con "slice" solo
+       deja ver el 22% central y la luna y la mansion se caian fuera de
+       pantalla. El corte coincide con el breakpoint de 768px del CSS. */
+    var ESCENA_MOVIL_MAX = 768;
+    var escenaEnCurso = null;
+
+    function esVistaMovil() {
+        return window.innerWidth <= ESCENA_MOVIL_MAX;
+    }
+
     function poblarHeroScene(eventId) {
         var container = document.querySelector('.hero__scene');
         if (!container || typeof DecoracionesSVG === 'undefined') return;
-        container.innerHTML = DecoracionesSVG.getHeroScene ? DecoracionesSVG.getHeroScene(eventId) : '';
+        var movil = esVistaMovil();
+        escenaEnCurso = movil ? 'movil' : 'escritorio';
+        if (movil && DecoracionesSVG.getHeroSceneMobile) {
+            container.innerHTML = DecoracionesSVG.getHeroSceneMobile(eventId);
+        } else {
+            container.innerHTML = DecoracionesSVG.getHeroScene ? DecoracionesSVG.getHeroScene(eventId) : '';
+        }
+    }
+
+    // Al rotar el celular o al pasar de ventana estrecha a ancha hay que
+    // rehacer la escena: la version vertical no sirve en escritorio y al reves.
+    var timerResizeEscena = null;
+    function vigilarResizeEscena() {
+        if (timerResizeEscena) clearTimeout(timerResizeEscena);
+        timerResizeEscena = setTimeout(function () {
+            if (!eventoActivo || !escenaEnCurso) return;
+            var actual = esVistaMovil() ? 'movil' : 'escritorio';
+            if (actual !== escenaEnCurso) {
+                poblarHeroScene(eventoActivo.id);
+            }
+        }, 250);
     }
 
     var guirnaldaTimers = [];
@@ -544,10 +577,18 @@ var EventosManager = (function() {
             ? '<span class="product-card__badge product-card__badge--discount">-' + descPct + '%</span>'
             : '';
 
+        // Las tarjetas del evento son las que se pintan de a golpe (28 a la vez), asi que
+        // usan la misma miniatura de 600px que el resto del catalogo.
+        var rutas = (typeof window.imagenesProducto === 'function') ? window.imagenesProducto(product) : null;
+        var sizes = (typeof window.SIZES_TARJETA_CARD === 'string') ? window.SIZES_TARJETA_CARD : '300px';
+        var imagenHtml = rutas
+            ? '<img src="' + rutas.original + '" srcset="' + rutas.srcset + '" sizes="' + sizes + '" alt="' + product.nombre + '" loading="lazy" decoding="async" onerror="_eventoImgError(this)">'
+            : '<div class="product-card__fallback" style="display:flex;">' + (product.emoji || '✦') + '</div>';
+
         return '<div class="product-card" data-id="' + product.id + '" style="--card-color:' + colors.principal + ';--card-light:' + colors.secundario + ';--btn-color:' + evento.colores.btnColor + ';">' +
             '<div class="product-card__image">' +
-                '<img src="' + product.imagen + '" alt="' + product.nombre + '" loading="lazy" onerror="_eventoImgError(this)">' +
-                '<div class="product-card__fallback" style="display:none;">' + (product.emoji || '✦') + '</div>' +
+                imagenHtml +
+                (rutas ? '<div class="product-card__fallback" style="display:none;">' + (product.emoji || '✦') + '</div>' : '') +
                 discountBadge +
                 '<span class="product-card__type">' + (product.emoji || '✦') + '</span>' +
             '</div>' +
@@ -657,6 +698,15 @@ var EventosManager = (function() {
         initHeroObserver();
         var ev = detectarEvento();
         if (ev) aplicarEvento(ev);
+
+        // Rehacer la escena del hero al rotar el celular o al cambiar el
+        // ancho de la ventana (la version vertical y la panoramica no valen
+        // la una para la otra).
+        window.addEventListener('resize', vigilarResizeEscena, { passive: true });
+        window.addEventListener('orientationchange', function () {
+            setTimeout(vigilarResizeEscena, 260);
+        }, { passive: true });
+
         temporizador = setInterval(function() {
             if (isDebugMode() && eventoActivo) return;
             var now = detectarEvento();

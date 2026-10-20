@@ -16,7 +16,9 @@ html { overflow-x: hidden; }
 .hero__scene {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    /* Debajo del canvas de partículas (z=2) para que se vean volar por encima
+       del dibujo, y muy por debajo del texto (z=5). */
+    z-index: 1;
     pointer-events: none;
     overflow: hidden;
     opacity: 0;
@@ -45,11 +47,17 @@ body[data-event] .hero__scene {
 
 #seasonal-canvas {
     position: fixed;
+    /* inset:0 ya cubre el viewport; declarar width/height 100vw/100vh hacia que
+       el ancho explicito le ganara a right:0 y la caja quedara mas ancha que el
+       viewport cuando hay barra de scroll (y body{overflow-x:hidden} la recorta) */
     inset: 0;
-    width: 100vw;
-    height: 100vh;
+    width: auto;
+    height: auto;
     pointer-events: none;
-    z-index: 1;
+    /* Por encima de la escena del hero (z=1) pero por debajo del texto y las
+       tarjetas (z=5): las partículas se ven volar sobre el dibujo sin tapar
+       lo que se está leyendo. */
+    z-index: 2;
     opacity: 0;
     transition: opacity 0.8s ease;
 }
@@ -61,8 +69,8 @@ body[data-event] .hero__scene {
 .event-emoji-layer {
     position: fixed;
     inset: 0;
-    width: 100vw;
-    height: 100vh;
+    width: auto;
+    height: auto;
     pointer-events: none;
     z-index: 1;
     overflow: hidden;
@@ -723,6 +731,55 @@ body[data-event] .location__visual {
     .reveal { opacity: 1; transform: none; transition: none; }
 }
 
+/* === MODO LIGERO (gama baja) ===
+   Los keyframes que animan `filter` (drop-shadow/brightness) NO se pueden componer
+   en GPU: el navegador debe rasterizar el SVG otra vez en cada frame. En gama baja
+   se sustituyen por variantes solo-opacidad que conservan el mismo ritmo visual. */
+.perf-lite .bulb-glass            { animation-name: garlandGlassFlashLite; }
+.perf-lite .xm-tree-bulb          { animation-name: treeBulbBreatheLite; }
+.perf-lite .xm-tree-star          { animation-name: starPulseLite; }
+.perf-lite .house-window-glow     { animation-name: houseWindowWarmGlowLite; }
+.perf-lite .pk-eye-glow           { animation-name: pumpkinFlickerLite; }
+.perf-lite .hw-window-amber       { animation-name: windowAmberGlowLite; }
+.perf-lite .hw-window-purple      { animation-name: windowPurpleGlowLite; }
+.perf-lite .dp-window-glow        { animation-name: dpWindowGlowLite; }
+
+@keyframes garlandGlassFlashLite {
+    0%, 20% { opacity: 0.35; }
+    80%, 100% { opacity: 1; }
+}
+@keyframes treeBulbBreatheLite {
+    0% { opacity: 0.45; }
+    50% { opacity: 1; }
+    100% { opacity: 0.55; }
+}
+@keyframes starPulseLite {
+    0%, 100% { transform: scale(0.92); opacity: 0.85; }
+    50% { transform: scale(1.12); opacity: 1; }
+}
+@keyframes houseWindowWarmGlowLite {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+@keyframes pumpkinFlickerLite {
+    0%, 100% { opacity: 0.85; }
+    25% { opacity: 1; }
+    60% { opacity: 0.78; }
+    85% { opacity: 0.98; }
+}
+@keyframes windowAmberGlowLite {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 1; }
+}
+@keyframes windowPurpleGlowLite {
+    0%, 100% { opacity: 0.65; }
+    50% { opacity: 1; }
+}
+@keyframes dpWindowGlowLite {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
     body[data-event] .nav__menu {
@@ -742,7 +799,7 @@ body[data-event] .location__visual {
         background: rgba(255, 255, 255, 0.1);
     }
     .seasonal-section { padding: 30px 0 50px; }
-    .seasonal-section__grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .seasonal-section__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     #test-panel { bottom: 10px; left: 10px; max-width: 175px; }
     .test-panel__btn { padding: 6px 10px; font-size: 11px; }
     .hero-deco--web { width: 140px; }
@@ -761,5 +818,5 @@ body[data-event] .location__visual {
 }
 
 @media (max-width: 480px) {
-    .seasonal-section__grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .seasonal-section__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }

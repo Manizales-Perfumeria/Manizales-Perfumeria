@@ -7,6 +7,10 @@ var Animaciones = (function() {
     var ctx = null;
     var animacionActual = null;
     var corriendo = false;
+    // El estado pedido ya quedo aplicado, aunque el bucle no corra (gama baja o
+    // prefers-reduced-motion). Evita que mantenerCanvasActivo() lo reaplique en
+    // cada cambio de vista.
+    var configurado = false;
     var pausado = false;
     var animFrameId = null;
     var ultimoTiempo = 0;
@@ -16,10 +20,59 @@ var Animaciones = (function() {
     var intervaloFrame = 1000 / FPS_OBJETIVO;
     var acumulador = 0;
     var resizeHandler = null;
+    var resizeTimer = null;
+    // Alto de la URL bar en móvil: los deltas menores se ignoran para no
+    // reasignar el bitmap del canvas en cada scroll.
+    var UMBRAL_RESIZE_MOVIL = 260;
+    var UMBRAL_RESIZE_ESCRITORIO = 200;
+    var ultimoAncho = 0;
+    // Cuánto se mueve la decoración. Con "reducir animaciones" del sistema va
+    // más despacio, pero NO se congela: antes (sin este ajuste) los
+    // murciélagos quedaban quietos y la decoración parecía rota.
+    var factorMovimiento = 1;
+    var ultimoAltoAplicado = 0;
 
     function prefersReducedMotion() {
         return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
+
+    // === PERFIL DE RENDIMIENTO ===
+    // Gama baja: poca RAM, pocos nucleos o memoria de dispositivo limitada.
+    // En estos equipos se recortan las partículas y las animaciones costosas.
+    function detectarPerfilRendimiento() {
+        var nucleos = navigator.hardwareConcurrency || 0;
+        var memoria = navigator.deviceMemory || 0;
+        var pixels = window.innerWidth * window.innerHeight * Math.min(window.devicePixelRatio || 1, 2);
+        var esPantallaGrande = pixels > 1600000;
+        var esGamaBaja = esMobile && (
+            (nucleos > 0 && nucleos <= 4) ||
+            (memoria > 0 && memoria <= 2) ||
+            esPantallaGrande
+        );
+        return {
+            esMobile: esMobile,
+            gamaBaja: esGamaBaja,
+            // En gama baja se baja el ritmo de refresco (menos trabajo por segundo)
+            // pero NUNCA se quitan las decoraciones: solo se achican y se dibujan
+            // menos partículas. Los murciélagos y la nieve siempre están.
+            fps: esGamaBaja ? 20 : (esMobile ? 30 : 60),
+            divisorParticulas: esGamaBaja ? 3 : (esMobile ? 2 : 1)
+        };
+    }
+
+    var perfil = detectarPerfilRendimiento();
+    var esGamaBaja = perfil.gamaBaja;
+
+    function aplicarPerfil() {
+        esMobile = perfil.esMobile;
+        esGamaBaja = perfil.gamaBaja;
+        FPS_OBJETIVO = perfil.fps;
+        intervaloFrame = 1000 / FPS_OBJETIVO;
+        // Se expone para que el CSS pueda recortar animaciones en gama baja
+        document.documentElement.classList.toggle('perf-lite', esGamaBaja);
+    }
+
+    aplicarPerfil();
 
     function onVisibilityChange() {
         pausado = document.hidden;
@@ -40,16 +93,23 @@ var Animaciones = (function() {
         canvas.style.display = 'block';
         canvas.style.position = 'fixed';
         canvas.style.inset = '0';
-        canvas.style.width = '100vw';
-        canvas.style.height = '100vh';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
         canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '1';
-        canvas.style.willChange = 'transform';
-        canvas.style.transform = 'translate3d(0, 0, 0)';
-        canvas.style.contain = 'strict';
+        // El z-index lo define el CSS (#seasonal-canvas). Si se fija aqui, este
+        // estilo en linea le gana a la hoja de estilos y las particulas terminan
+        // por encima del texto.
+        // Sin will-change: la capa ya existe por position:fixed y forzarla
+        // reserva memoria de GPU para un bitmap del tamaño del viewport sin beneficio.
+        // Al (re)iniciar se olvida el tamaño anterior para aplicar siempre el actual.
+        ultimoAncho = 0;
+        ultimoAltoAplicado = 0;
         resizeCanvas();
         if (!resizeHandler) {
-            resizeHandler = resizeCanvas;
+            resizeHandler = function () {
+                if (resizeTimer) clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(resizeCanvas, 200);
+            };
             window.addEventListener('resize', resizeHandler, { passive: true });
         }
         return true;
@@ -57,8 +117,30 @@ var Animaciones = (function() {
 
     function resizeCanvas() {
         if (!canvas) return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // En móvil el alto cambia continuamente por la barra de URL al hacer scroll.
+        // Reasignar width/height realoca el bitmap y fuerza repintado completo, así que:
+        //   - si cambia el ancho (rotacion, resize real) se reasigna siempre
+        //   - si solo cambia el alto, se reasigna solo con deltas grandes (barra de
+        //     herramientas del navegador, no el micro vaiven de la barra de URL)
+        // El CSS (inset:0 + width/height 100%) ya hace que la caja cubra el viewport,
+        // así que mientras tanto el bitmap se escala sin que se note en las particulas.
+        var ancho = window.innerWidth;
+        var alto = window.innerHeight;
+        var umbral = esMobile ? UMBRAL_RESIZE_MOVIL : UMBRAL_RESIZE_ESCRITORIO;
+
+        var cambioDeAncho = ancho !== ultimoAncho;
+        var cambioDeAlto = Math.abs(alto - ultimoAltoAplicado) >= umbral;
+        if (!cambioDeAncho && !cambioDeAlto) return;
+
+        ultimoAncho = ancho;
+        ultimoAltoAplicado = alto;
+
+        // El lienzo se dibuja siempre a tamano real (1:1). Reducirlo hacia que
+        // los copos de nieve y los murcielagos salieran mas chiquitos y con otro
+        // aspecto. Para aligerar en gama baja se baja el ritmo de refresco y la
+        // cantidad de particulas, no el dibujo.
+        canvas.width = ancho;
+        canvas.height = alto;
     }
 
     // === NIEVE PROFESIONAL ===
@@ -171,15 +253,24 @@ var Animaciones = (function() {
         var tamano = 20 + Math.random() * 30;
         var startX;
         if (randomY) {
-            startX = Math.random() < 0.5
-                ? Math.random() * canvas.width * 0.6
-                : -50 - Math.random() * 200;
+            // Casi siempre nacen dentro de la pantalla. Si nacen muy a la
+            // izquierda tardan varios segundos en entrar y se pueden perder
+            // de vista sin que uno se dé cuenta.
+            startX = Math.random() < 0.8
+                ? Math.random() * canvas.width
+                : -50 - Math.random() * 120;
         } else {
             startX = -50 - Math.random() * 100;
         }
         return {
             x: startX,
-            y: randomY ? Math.random() * canvas.height * 0.85 : Math.random() * canvas.height * 0.5,
+            // Vuelan por la franja de arriba, que es el cielo. Antes bajaban
+            // hasta el 92% de la altura y en el celular esa zona queda detrás
+            // de la tarjeta de producto (que es opaca): el murciélago existía
+            // pero no se veía nunca.
+            y: randomY
+                ? canvas.height * (0.06 + Math.random() * 0.32)
+                : Math.random() * canvas.height * 0.5,
             tamano: tamano,
             velX: 2 + Math.random() * 2.5,
             velY: 0,
@@ -275,8 +366,10 @@ var Animaciones = (function() {
                 m.zigDuracion = 35 + Math.random() * 45;
             }
             m.y += (m.dirY || 1) * (1 + Math.abs(Math.sin(m.oscilacion)) * 1.1);
-            if (m.y < canvas.height * 0.03) m.dirY = 1;
-            if (m.y > canvas.height * 0.92) m.dirY = -1;
+            // Se mantienen en la franja del cielo (arriba). Si bajan más, en el
+            // celular quedan tapados por la tarjeta de producto.
+            if (m.y < canvas.height * 0.05) m.dirY = 1;
+            if (m.y > canvas.height * 0.42) m.dirY = -1;
 
             if (m.x > canvas.width + 60) {
                 var nuevo = this.crearMurcielago(false);
@@ -917,17 +1010,18 @@ var Animaciones = (function() {
 
         if (!iniciarCanvas()) { console.warn('[Animaciones] Canvas no encontrado'); return; }
 
-        // Detectar si es móvil para reducir partículas y mejorar rendimiento
+        // Refrescar el perfil por si cambió el tamaño/orientación del dispositivo
         esMobile = (window.innerWidth <= 768) || ('ontouchstart' in window);
-        FPS_OBJETIVO = esMobile ? 30 : 60;
-        intervaloFrame = 1000 / FPS_OBJETIVO;
+        perfil = detectarPerfilRendimiento();
+        aplicarPerfil();
 
+        configurado = true;
         corriendo = true;
         pausado = false;
 
-        // En móvil reducir la cantidad a la mitad (máx 15, mín 2)
+        // En móvil se deja la mitad de las partículas; en gama baja, la tercera parte
         var cantidadBase = Math.min((opciones && opciones.cantidad) || 12, 30);
-        var cantidad = esMobile ? Math.max(2, Math.floor(cantidadBase / 2)) : cantidadBase;
+        var cantidad = Math.max(2, Math.floor(cantidadBase / perfil.divisorParticulas));
         var color = (opciones && opciones.color) || '#ffffff';
 
         switch (tipo) {
@@ -957,6 +1051,12 @@ var Animaciones = (function() {
 
         canvas.classList.add('active');
         resizeCanvas();
+
+        // Si el sistema pide menos movimiento, la decoración sigue viva pero va
+        // más despacio. Antes se dibujaba una sola vez y se quedaba quieta,
+        // y el usuario veía los murciélagos congelados y pensaba que estaba roto.
+        factorMovimiento = prefersReducedMotion() ? 0.5 : 1;
+
         ultimoTiempo = performance.now();
         acumulador = 0;
         bucleAnimacion(ultimoTiempo);
@@ -970,28 +1070,37 @@ var Animaciones = (function() {
         // Evitar desbordamiento de delta durante scroll rápido o congelamiento temporal
         if (delta > 50) delta = 50;
         acumulador += delta;
-        if (acumulador > 50) acumulador = 50;
+        // Tope generoso (2 frames). Con un tope de 50 y un intervalo de 50 ms
+        // el redondeo en coma flotante hacia que se perdiera tiempo y el motor
+        // acabara pintando a 16 FPS en vez de 20.
+        if (acumulador > intervaloFrame * 2) acumulador = intervaloFrame * 2;
 
         // Actualizar a velocidad fija
+        var huboPaso = false;
         while (acumulador >= intervaloFrame) {
             if (animacionActual) {
-                animacionActual.principal.actualizar(1);
+                animacionActual.principal.actualizar(factorMovimiento);
                 if (animacionActual.extras) {
                     for (var i = 0; i < animacionActual.extras.length; i++) {
-                        animacionActual.extras[i].actualizar(1);
+                        animacionActual.extras[i].actualizar(factorMovimiento);
                     }
                 }
             }
             acumulador -= intervaloFrame;
+            huboPaso = true;
         }
 
-        // Dibujar
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (animacionActual) {
-            animacionActual.principal.dibujar();
-            if (animacionActual.extras) {
-                for (var j = 0; j < animacionActual.extras.length; j++) {
-                    animacionActual.extras[j].dibujar();
+        // Dibujar solo cuando la simulación avanzó. Antes se limpiaba y redibujaba la
+        // pantalla completa en cada requestAnimationFrame, así que en móvil se pagaba
+        // el clearRect del viewport a 60 FPS para mostrar el mismo frame de 30 FPS.
+        if (huboPaso) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (animacionActual) {
+                animacionActual.principal.dibujar();
+                if (animacionActual.extras) {
+                    for (var j = 0; j < animacionActual.extras.length; j++) {
+                        animacionActual.extras[j].dibujar();
+                    }
                 }
             }
         }
@@ -1021,6 +1130,7 @@ var Animaciones = (function() {
 
     function detener() {
         corriendo = false;
+        configurado = false;
         pausado = false;
         if (animFrameId) {
             cancelAnimationFrame(animFrameId);
@@ -1034,7 +1144,7 @@ var Animaciones = (function() {
     }
 
     function estaActivo() {
-        return corriendo;
+        return configurado;
     }
 
     return {
@@ -1043,6 +1153,14 @@ var Animaciones = (function() {
         pausar: pausar,
         reanudar: reanudar,
         estaActivo: estaActivo,
-        prefersReducedMotion: prefersReducedMotion
+        prefersReducedMotion: prefersReducedMotion,
+        // Consumido por eventos.js para recortar animaciones y tarjetas en gama baja
+        obtenerPerfil: function () {
+            return {
+                esMobile: perfil.esMobile,
+                gamaBaja: esGamaBaja,
+                fps: perfil.fps
+            };
+        }
     };
 })();

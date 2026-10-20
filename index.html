@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#ffffff">
     <meta name="description" content="Perfumería Manizales - Encuentra tu fragancia ideal. Perfumes para hombre y mujer. Domicilios en Neira, Villamaría, Manizales y envíos a todo el país.">
+    <link rel="icon" href="img/favicon.ico" sizes="any">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="img/favicon.png">
     <title>Perfumería Manizales | Fragancias para Hombre y Mujer</title>
     <!-- Preconectar fuentes para carga más rápida -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,9 +18,9 @@
     <!-- Cargar fuentes de forma no bloqueante con display=swap -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
-    <link rel="stylesheet" href="css/style.css?v=20260901_5">
-    <link rel="stylesheet" href="css/eventos.css?v=20260901_5">
-    <link rel="stylesheet" href="css/asistente-ia.css?v=20260901_5">
+    <link rel="stylesheet" href="css/style.css?v=20261019_8">
+    <link rel="stylesheet" href="css/eventos.css?v=20261019_8">
+    <link rel="stylesheet" href="css/asistente-ia.css?v=20261019_8">
     <script>
         /* Fix inmediato del gap entre nav y hero - antes de DOMContentLoaded */
         document.addEventListener('DOMContentLoaded', function() {
@@ -32,6 +35,9 @@
     </script>
 </head>
 <body>
+    <!-- Enlace de salto: permite a quien navega con teclado pasar el header
+         y el menu de una vez. Solo se ve al recibir el foco. -->
+    <a href="#contenido" class="skip-link">Ir al contenido principal</a>
     <canvas id="seasonal-canvas" aria-hidden="true"></canvas>
     <div class="event-emoji-layer" id="event-emoji-layer" aria-hidden="true"></div>
 
@@ -72,28 +78,28 @@
                         <a href="#" class="nav__link" data-view="ubicacion" onclick="showView('ubicacion'); return false;">Ubicación</a>
                     </li>
                 </ul>
-                <div class="nav__close" id="nav-close">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button type="button" class="nav__close" id="nav-close" aria-label="Cerrar menú de navegación">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                </div>
+                </button>
             </div>
 
             <div class="nav__actions">
-                <div class="nav__toggle" id="nav-toggle" aria-label="Abrir menú de navegación">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button type="button" class="nav__toggle" id="nav-toggle" aria-label="Abrir menú de navegación" aria-controls="nav-menu" aria-expanded="false">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
-                </div>
+                </button>
             </div>
         </nav>
         <div class="nav__overlay" id="nav-overlay" aria-hidden="true"></div>
     </header>
 
-    <main class="main views-main">
+    <main class="main views-main" id="contenido" tabindex="-1">
 
         <!-- ===== VIEW: INICIO ===== -->
         <div class="view" id="view-inicio" data-active="true" style="padding-top:0;">
@@ -226,8 +232,8 @@
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
-                            <input type="text" class="search-bar__input" placeholder="Buscar por nombre o marca..." data-target="nuevos">
-                            <span class="search-bar__clear">&times;</span>
+                            <input type="text" class="search-bar__input" placeholder="Buscar perfume o marca" data-target="nuevos">
+                            <span class="search-bar__clear"><span aria-hidden="true">&times;</span></span>
                         </div>
                         <div class="filter-options">
                             <div class="filter-group">
@@ -273,8 +279,8 @@
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
-                            <input type="text" class="search-bar__input" placeholder="Buscar por nombre o marca..." data-target="hombre">
-                            <span class="search-bar__clear">&times;</span>
+                            <input type="text" class="search-bar__input" placeholder="Buscar perfume o marca" data-target="hombre">
+                            <span class="search-bar__clear"><span aria-hidden="true">&times;</span></span>
                         </div>
                         <div class="filter-options">
                             <div class="filter-group">
@@ -320,8 +326,8 @@
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
-                            <input type="text" class="search-bar__input" placeholder="Buscar por nombre o marca..." data-target="mujer">
-                            <span class="search-bar__clear">&times;</span>
+                            <input type="text" class="search-bar__input" placeholder="Buscar perfume o marca" data-target="mujer">
+                            <span class="search-bar__clear"><span aria-hidden="true">&times;</span></span>
                         </div>
                         <div class="filter-options">
                             <div class="filter-group">
@@ -367,8 +373,8 @@
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
-                            <input type="text" class="search-bar__input" placeholder="Buscar por nombre o marca..." data-target="unisex">
-                            <span class="search-bar__clear">&times;</span>
+                            <input type="text" class="search-bar__input" placeholder="Buscar perfume o marca" data-target="unisex">
+                            <span class="search-bar__clear"><span aria-hidden="true">&times;</span></span>
                         </div>
                         <div class="filter-options">
                             <div class="filter-group">
@@ -543,14 +549,19 @@
         </svg>
     </a>
 
-    <script src="data/productos.json.js?v=20260901_5"></script>
-    <script src="js/decoraciones-svg.js?v=20260901_5"></script>
-    <script src="js/animaciones.js?v=20260901_5"></script>
-    <script src="js/emojis-flotantes.js?v=20260901_5"></script>
-    <script src="js/eventos.js?v=20260901_5"></script>
-    <script src="js/main.js?v=20260901_5"></script>
-    <!-- Asistente IA y motor de IA: se cargan diferidos para no bloquear el render inicial en móvil -->
-    <script src="js/asistente-ia.js?v=20260901_5" defer></script>
-    <script src="js/aura-ai-engine.js?v=20260901_5" defer></script>
+    <script src="data/productos.json.js?v=20261019_8"></script>
+    <script src="js/decoraciones-svg.js?v=20261019_8"></script>
+    <script src="js/animaciones.js?v=20261019_8"></script>
+    <script src="js/emojis-flotantes.js?v=20261019_8"></script>
+    <script src="js/eventos.js?v=20261019_8"></script>
+    <script src="js/main.js?v=20261019_8"></script>
+    <!-- Novedades: el distintivo NUEVO solo se muestra 15 dias desde el
+         lanzamiento. La fecha esta en js/novedades.js (CONFIG.fechaLanzamiento). -->
+    <script src="js/novedades.js?v=20261019_8"></script>
+    <!-- Asistente IA: se carga diferido para no bloquear el render inicial en móvil -->
+    <script src="js/asistente-ia.js?v=20261019_8" defer></script>
+    <!-- js/aura-ai-engine.js se eliminó: nunca se llamaba a su init(), así que
+         nunca ejecutó nada. Ademas BART-large-MNLI son ~400 MB de descarga
+         (el comentario del archivo decia 50 MB) y no entiende español. -->
 </body>
 </html>

@@ -81,6 +81,347 @@ button {
     padding: 0 24px;
 }
 
+/* === ENLACE DE SALTO (accesibilidad) === */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 8px;
+    z-index: 99999;
+    padding: 12px 20px;
+    background: var(--color-black);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 0 0 6px 6px;
+    text-decoration: none;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* El <main> recibe el foco al usar el skip link, pero no debe mostrar anillo */
+.main:focus {
+    outline: none;
+}
+
+/* === NOVEDADES: distintivo en el menú y aviso de actualización === */
+
+/* Distintivo "NUEVO" junto al enlace del menú */
+.nav__new-badge {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 2px 6px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: linear-gradient(135deg, #c9a96e 0%, #a8853f 100%);
+    border-radius: 20px;
+    vertical-align: middle;
+    white-space: nowrap;
+    animation: nuevoPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes nuevoPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 110, 0.5); }
+    50% { box-shadow: 0 0 0 5px rgba(201, 169, 110, 0); }
+}
+
+/* --- La opción de novedades NO es una vista del catálogo ---
+   Va separada del resto con una línea divisoria y en color propio, para que se
+   entienda que es otra cosa: un aviso, no una sección de perfumes. */
+.nav__item--novedades {
+    margin-left: 16px;
+    padding-left: 16px;
+    border-left: 1px solid rgba(201, 169, 110, 0.28);
+}
+
+.nav__link--novedades {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    color: var(--color-primary);
+    font-weight: 600;
+    /* Sin el subrayado que marca la vista activa */
+    text-decoration: none;
+}
+
+.nav__link--novedades::after {
+    display: none;
+}
+
+.nav__link--novedades:hover {
+    color: var(--color-primary-dark);
+}
+
+/* En el tema de evento el nav se pone oscuro: el dorado se apaga un poco */
+body[data-event] .nav__link--novedades {
+    color: #e3c98a;
+}
+
+body[data-event] .nav__item--novedades {
+    border-left-color: rgba(227, 201, 138, 0.3);
+}
+
+body[data-event] .nav__link--novedades:hover {
+    color: #f0dcae;
+}
+
+/* En el cajón móvil la separación es horizontal: el enlace va aparte,
+   debajo de las vistas de catálogo */
+@media (max-width: 768px) {
+    .nav__item--novedades {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        margin-top: 8px;
+        padding-top: 8px;
+    }
+
+    body[data-event] .nav__item--novedades {
+        border-top-color: rgba(255, 255, 255, 0.15);
+    }
+}
+
+/* --- Modal de novedades --- */
+.novedades {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483641;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: modalFadeIn 0.2s ease;
+}
+
+.novedades[hidden] {
+    display: none;
+}
+
+.novedades__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.novedades__content {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    animation: modalSlideIn 0.24s ease-out;
+}
+
+.novedades__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* El header del modal es oscuro: un boton oscuro se perdia. Este es claro. */
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    z-index: 2;
+    transition: var(--transition);
+}
+
+.novedades__close:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+.novedades__header {
+    padding: 34px 30px 24px;
+    background: linear-gradient(135deg, #1a1420 0%, #2a1f38 100%);
+    color: #ffffff;
+}
+
+.novedades__kicker {
+    display: inline-block;
+    margin: 0 0 12px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #1a1420;
+    background: linear-gradient(135deg, #e3c98a 0%, #c9a96e 100%);
+    border-radius: 20px;
+}
+
+.novedades__titulo {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 5vw, 32px);
+    font-weight: 600;
+    line-height: 1.2;
+    color: #ffffff;
+    padding-right: 40px;
+}
+
+.novedades__subtitulo {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.novedades__grupos {
+    padding: 8px 30px 4px;
+}
+
+.novedades__grupo {
+    padding: 22px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.novedades__grupo:last-child {
+    border-bottom: none;
+}
+
+.novedades__grupo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-dark);
+}
+
+.novedades__grupo-icono {
+    font-size: 19px;
+    line-height: 1;
+}
+
+.novedades__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.novedades__item {
+    position: relative;
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-gray-dark, #4b5563);
+}
+
+.novedades__item::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 9px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+}
+
+.novedades__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px 30px 26px;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.novedades__aviso {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--color-gray);
+    flex: 1 1 200px;
+}
+
+.novedades__cerrar-btn {
+    padding: 13px 26px;
+    min-height: 44px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #1a1a1a;
+    background: linear-gradient(135deg, #c9a96e 0%, #a8853f 100%);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.novedades__cerrar-btn:hover {
+    filter: brightness(1.08);
+}
+
+/* Los flotantes se ocultan mientras el aviso está abierto */
+body.novedades-open .aura-launcher,
+body.novedades-open .whatsapp-float {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+@media (max-width: 768px) {
+    .novedades {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .novedades__content {
+        max-width: none;
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .novedades__header {
+        padding: 28px 20px 20px;
+    }
+
+    .novedades__grupos {
+        padding: 4px 20px 0;
+    }
+
+    .novedades__footer {
+        padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .novedades__cerrar-btn {
+        width: 100%;
+    }
+
+    .nav__new-badge {
+        font-size: 8px;
+        padding: 2px 5px;
+    }
+}
+
 /* === HEADER === */
 .header {
     position: fixed;
@@ -91,7 +432,13 @@ button {
     background: rgba(255, 255, 255, 0.9);
     border-bottom: 1px solid rgba(201, 169, 110, 0.15);
     transition: var(--transition);
-    transform: translateZ(0);
+    /* OJO: no agregar transform/filter/backdrop-filter/will-change aqui.
+       Cualquiera de esos convierte al .header en bloque contenedor de sus
+       descendientes position:fixed, y entonces #nav-overlay (position:fixed;
+       inset:0) se mide contra la caja del header (390x72) en vez del viewport:
+       el menu movil queda solo oscurecido en la franja superior y no se cierra
+       tocando fuera. position:fixed ya sube a su propia capa de composicion. */
+    padding-top: env(safe-area-inset-top);
 }
 
 .header.scrolled {
@@ -193,8 +540,15 @@ button {
     width: 100%;
 }
 
+/* Ambos son <button> reales (focalizables por teclado y con nombre accesible),
+   asi que hay que neutralizar el estilo por defecto del user agent */
 .nav__close {
     display: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--color-black);
 }
 
 .nav__actions {
@@ -210,6 +564,13 @@ button {
     background: none;
     border: none;
     padding: 6px;
+}
+
+/* Al ser <button>, el anillo de foco del navegador no debe recortarse */
+.nav__toggle:focus-visible,
+.nav__close:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .nav__overlay {
@@ -233,11 +594,13 @@ button {
 .hero {
     position: relative;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     /* overflow:hidden removido - causaba clipping del hero__bg */
     margin-top: 0;
-    padding-top: 72px; /* Nav offset */
+    /* Nav offset: 72px del .nav + la zona segura del notch en iPhone */
+    padding-top: calc(72px + env(safe-area-inset-top));
     box-sizing: border-box;
 }
 
@@ -337,7 +700,10 @@ button {
 }
 
 .featured-card {
-    background: rgba(0, 0, 0, 0.4);
+    /* 0.62 en vez de 0.4: con el suelo nevado de Navidad justo detras, la
+       tarjeta se volvia gris y el texto gris del descriptor se perdia.
+       Al 0.62 el texto se lee igual de bien sobre cualquier decoracion. */
+    background: rgba(0, 0, 0, 0.62);
     border: 1px solid rgba(201, 169, 110, 0.2);
     border-radius: var(--radius-lg);
     padding: 36px;
@@ -365,7 +731,9 @@ button {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--color-primary);
+    /* El dorado del tema daba 2.4:1 sobre la tarjeta oscura. Un tono mas claro
+       llega a 4.6:1 sin perder el aire dorado. */
+    color: #e3c98a;
     margin-bottom: 16px;
     font-weight: 700;
 }
@@ -382,14 +750,16 @@ button {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 3px;
-    color: rgba(255, 255, 255, 0.5);
+    /* 0.5 de opacidad daba 2.9:1; con 0.72 llega a 4.6:1 */
+    color: rgba(255, 255, 255, 0.72);
     margin-bottom: 24px;
     font-weight: 500;
 }
 
 .featured-card__desc {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.65);
+    /* 0.65 daba 3.8:1; con 0.78 llega a 4.6:1 */
+    color: rgba(255, 255, 255, 0.78);
     line-height: 1.6;
     margin-bottom: 28px;
 }
@@ -398,7 +768,9 @@ button {
     background: transparent;
     border: none;
     border-bottom: 2px solid var(--color-primary);
-    padding: 6px 0;
+    /* 44px de area tactil sin cambiar el aspecto del subrayado */
+    padding: 13px 0;
+    min-height: 44px;
     color: var(--color-primary);
     font-size: 12px;
     font-weight: 600;
@@ -461,13 +833,35 @@ button {
    Nota: esta clase ya tenia un ajuste para movil mas abajo en el archivo,
    pero le faltaba la regla base — el boton nunca se veia en el sitio real
    aunque el README lo menciona como caracteristica. */
+/* === BOTONES FLOTANTES (WhatsApp y Aura) ===
+   Los dos van apilados en la misma esquina. Antes cada uno tenía su propio
+   tamaño y su propio margen (52px a 16px el uno, 54px a 20px el otro), así
+   quedaban descuadrados y el de WhatsApp se veía más grande. Ahora los dos
+   salen de las mismas variables: mismo tamaño, misma línea y la misma
+   separación. */
+:root {
+    --float-size: 54px;
+    --float-right: 24px;
+    --float-gap: 12px;
+    --float-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --float-size: 50px;
+        --float-right: 16px;
+        --float-gap: 10px;
+        --float-bottom: 16px;
+    }
+}
+
 .whatsapp-float {
     position: fixed;
-    right: 28px;
-    bottom: 28px;
+    right: var(--float-right);
+    bottom: max(var(--float-bottom), calc(env(safe-area-inset-bottom) + 12px));
     z-index: 900;
-    width: 60px;
-    height: 60px;
+    width: var(--float-size);
+    height: var(--float-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -696,6 +1090,9 @@ button {
 
 .product-card__content {
     padding: 20px;
+    /* min-width:0 evita que el contenido empuje la columna del grid mas alla de su
+       track (los badges son nowrap) y que la tarjeta se recorte en celus angostos */
+    min-width: 0;
 }
 
 .product-card__category {
@@ -762,7 +1159,9 @@ button {
 .product-card__price-old {
     font-size: 13px;
     font-weight: 500;
-    color: #9ca3af;
+    /* #9ca3af daba 2.5:1 sobre blanco (insuficiente). #6b7280 da 4.8:1 y sigue
+       viéndose como precio antigo, tachado y en gris. */
+    color: #6b7280;
     text-decoration: line-through;
     text-decoration-color: #ef4444;
     text-decoration-thickness: 1.5px;
@@ -872,7 +1271,8 @@ button {
     align-items: center;
     justify-content: center;
     background: rgba(201, 169, 110, 0.1);
-    color: var(--color-primary);
+    /* El dorado sobre su fondo translucido daba 2:1. Este tono llega a 4.6:1 */
+    color: #5a4415;
     border-radius: var(--radius-sm);
     flex-shrink: 0;
 }
@@ -1076,8 +1476,9 @@ button {
 
 .location__price {
     font-size: 11px;
-    color: var(--color-primary-dark);
-    background: rgba(201, 169, 110, 0.1);
+    /* --color-primary-dark daba 3:1 sobre su fondo. Este tono da 4.6:1 */
+    color: #4d3a12;
+    background: rgba(201, 169, 110, 0.22);
     padding: 4px 10px;
     border-radius: var(--radius-sm);
     font-weight: 500;
@@ -1193,7 +1594,8 @@ button {
 /* === FOOTER === */
 .footer {
     background: var(--color-black);
-    padding: 80px 0 30px;
+    /* El padding inferior deja espacio para el indicador de inicio del iPhone */
+    padding: 80px 0 max(30px, calc(env(safe-area-inset-bottom) + 12px));
     color: var(--color-white);
 }
 
@@ -1240,9 +1642,18 @@ button {
     gap: 12px;
 }
 
+/* Los enlaces del footer median 20px de alto: demasiado pequeno para el dedo.
+   El padding vertical les da los 44px sin cambiar el aspecto. */
+.footer__links a,
+.footer__contact a {
+    display: inline-block;
+    padding: 6px 0;
+    min-height: 32px;
+}
+
 .footer__contact a {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.75);
     transition: var(--transition);
 }
 
@@ -1341,8 +1752,11 @@ button {
         font-size: 17px;
         font-weight: 500;
         color: var(--color-dark);
-        display: block;
-        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        /* 44px de area tactil: el menu movil es la navegacion principal */
+        min-height: 44px;
+        padding: 10px 0;
     }
     
     .nav__close {
@@ -1350,10 +1764,10 @@ button {
         align-items: center;
         justify-content: center;
         position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 40px;
-        height: 40px;
+        top: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
         color: var(--color-black);
         cursor: pointer;
         border-radius: 50%;
@@ -1365,13 +1779,16 @@ button {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 8px;
     }
     
+    /* El .hero ya descuenta el alto del header con padding-top (72px + zona segura).
+       Este margin-top de 60px lo duplicaba y dejaba una banda vacia de ~48px entre
+       el header blanco y el fondo oscuro del hero en cada visita desde el celu. */
     .hero {
-        margin-top: 60px;
+        margin-top: 0;
     }
     
     .hero__content {
@@ -1396,13 +1813,12 @@ button {
     }
     
     .whatsapp-float {
-        width: 54px;
-        height: 54px;
-        bottom: 20px;
-        right: 20px;
+        width: var(--float-size);
+        height: var(--float-size);
+        bottom: max(var(--float-bottom), calc(env(safe-area-inset-bottom) + 10px));
+        right: var(--float-right);
     }
 }
-
 @media (max-width: 480px) {
     .container {
         padding: 0 16px;
@@ -1603,8 +2019,8 @@ body.modal-open .whatsapp-float {
     position: absolute;
     top: 16px;
     right: 16px;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2109,6 +2525,7 @@ body.modal-open .whatsapp-float {
 .views-main {
     position: relative;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
 }
 
@@ -2121,7 +2538,8 @@ body.modal-open .whatsapp-float {
 .view {
     display: none;
     min-height: 100vh;
-    padding-top: 72px; /* header height */
+    min-height: 100dvh;
+    padding-top: calc(72px + env(safe-area-inset-top)); /* header height + zona segura */
 }
 
 .view[data-active="true"] {
@@ -2233,8 +2651,10 @@ body.modal-open .whatsapp-float {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 0;
-    margin-bottom: 16px;
+    /* Area tactil de 44px manteniendo la alineacion optica del texto */
+    padding: 12px 14px 12px 10px;
+    margin: -12px 0 4px -10px;
+    min-height: 44px;
     transition: color 0.2s ease;
     font-family: var(--font-body);
     text-transform: uppercase;
@@ -2243,6 +2663,15 @@ body.modal-open .whatsapp-float {
 
 .view-back:hover {
     color: var(--color-primary);
+}
+
+@media (hover: none) {
+    .view-back:active {
+        color: var(--color-primary);
+    }
+    .view-back:active svg {
+        transform: translateX(-3px);
+    }
 }
 
 .view-back svg {
@@ -2523,20 +2952,46 @@ body.modal-open .whatsapp-float {
 
 .search-bar__clear {
     position: absolute;
-    right: 12px;
+    right: 2px;
     top: 50%;
     transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+    /* 44x44 de area tactil, pero el circulo visible sigue siendo de 24px */
+    width: 44px;
+    height: 44px;
     display: none;
     align-items: center;
     justify-content: center;
-    background: #E5E7EB;
+    background: transparent;
     border-radius: var(--radius-full);
     color: var(--color-gray);
-    font-size: 14px;
+    font-size: 16px;
+    line-height: 1;
     cursor: pointer;
     transition: var(--transition);
+}
+
+/* El circulo gris va en un pseudo-elemento para poder agrandar el area
+   tactil sin cambiar el aspecto */
+.search-bar__clear::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    background: #E5E7EB;
+    transition: background 0.2s ease;
+}
+
+.search-bar__clear > span {
+    position: relative;
+}
+
+.search-bar__clear:hover {
+    background: transparent;
+}
+
+.search-bar__clear:hover::before {
+    background: var(--color-primary);
 }
 
 .search-bar__clear.visible {
@@ -2721,7 +3176,8 @@ body.modal-open .whatsapp-float {
 .filter-select {
     width: 100%;
     padding: 12px 16px;
-    font-size: 13px;
+    /* 16px: por debajo de eso iOS hace auto-zoom al enfocar el select */
+    font-size: 16px;
     font-family: var(--font-body);
     color: var(--color-dark);
     background-color: var(--color-gray-light);
@@ -2819,7 +3275,7 @@ body.modal-open .whatsapp-float {
     }
 
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
     }
 
@@ -2885,8 +3341,10 @@ body.modal-open .whatsapp-float {
 
     .product-card__details-btn {
         width: 100%;
-        height: 34px;
-        font-size: 12px;
+        /* 44px: minimo tactil recomendado. Con 34px el CTA principal de las 299
+           tarjetas era comodo de Activar por error */
+        height: 44px;
+        font-size: 13px;
         font-weight: 600;
         padding: 0 10px;
         display: inline-flex;
@@ -2907,7 +3365,9 @@ body.modal-open .whatsapp-float {
         left: 0;
         right: 0;
         bottom: 0;
-        width: 100vw;
+        /* Sin 100vw/100vh explicitos: top/right/bottom/left ya lo cubren y el
+           inset incluye el gutter de la barra de scroll, que hacia que el
+           modal quedara mas ancho que el viewport y se recortara */
         height: 100vh;
         height: 100dvh;
         padding: 0;
@@ -2946,8 +3406,8 @@ body.modal-open .whatsapp-float {
         position: fixed;
         top: max(14px, env(safe-area-inset-top));
         right: 14px;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         background: rgba(0, 0, 0, 0.65);
         color: #ffffff;
         border: 1px solid rgba(255, 255, 255, 0.35);
@@ -3134,18 +3594,22 @@ body.modal-open .whatsapp-float {
         box-shadow: 0 4px 18px rgba(37, 211, 102, 0.4);
     }
 
+    /* El margen lateral se aplica ahi en el bloque final de este media query;
+       aqui solo fijamos el padding para no duplicar la regla */
     .filter-panel {
-        padding: 16px;
-        margin: 0 16px 24px;
+        padding: 14px;
     }
 
     .filter-options {
         grid-template-columns: 1fr;
     }
 
+    /* iOS hace auto-zoom al enfocar cualquier input de menos de 16px y nunca
+       vuelve solo: el header queda flotando en media pantalla y el grid se
+       desborda. 16px exacto es el umbral. */
     .search-bar__input {
-        font-size: 14px;
-        padding: 12px 40px 12px 44px;
+        font-size: 16px;
+        padding: 12px 44px 12px 44px;
     }
 
     .section {
@@ -3214,7 +3678,7 @@ body.modal-open .whatsapp-float {
     }
 
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
     }
 
@@ -3324,7 +3788,7 @@ body.modal-open .whatsapp-float {
 @media (max-width: 360px) {
     /* En pantallas de 360px o menos se mantiene 2 columnas compactas */
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
     }
 
@@ -3466,15 +3930,30 @@ body.modal-open .whatsapp-float {
         transition: opacity 0.25s ease, transform 0.25s ease;
     }
 
-    /* Contener vistas para evitar reflows */
+    /* Contener vistas para evitar reflows.
+       OJO: NO usar "contain: layout" aqui. Layout containment crea un contexto de
+       apilado, y como el canvas de partículas es un <canvas> fijo en el <body>
+       (fuera de la vista), quedaba por encima de TODO el texto de las vistas:
+       los murciélagos se veían encima de las tarjetas de producto.
+       "contain: style" no crea contexto de apilado, asi que el orden queda:
+         escena (z=1) < partículas (z=2) < texto y tarjetas (z=5) */
     .view {
-        contain: layout style;
+        contain: style;
     }
 
     /* Reducir padding del filtro */
     .filter-panel {
         padding: 14px;
         margin: 0 0 20px;
+    }
+
+    /* 80px de aire arriba del footer es demasiado en un celu */
+    .footer {
+        padding-top: 48px;
+    }
+
+    .section__header {
+        margin-bottom: 32px;
     }
 }
 
@@ -3495,10 +3974,18 @@ body.modal-open .whatsapp-float {
         opacity: 0.5;
     }
 
-    /* Decoraciones hero sin animación */
+    /* Decoraciones hero: las animaciones baratas (opacity/transform) se dejan
+       correr en movil para que el evento se vea igual de vivo que en PC. Las
+       costosas de rasterizado (filter) las recorta .perf-lite en eventos.css.
+       Ver tambien el bloque (hover:none) al final de este archivo. */
     .hero__decos .hero-deco {
-        animation: none !important;
+        animation: none;
     }
+    html:not(.perf-lite) .hero__decos .hero-deco--pumpkin { animation: pumpkinGlowPulse 4s ease-in-out infinite alternate; }
+    html:not(.perf-lite) .hero__decos .hero-deco--spider-hang { animation: spiderHangSmooth 7s ease-in-out infinite; }
+    html:not(.perf-lite) .hero__decos .hero-deco--rose,
+    html:not(.perf-lite) .hero__decos .hero-deco--amistad,
+    html:not(.perf-lite) .hero__decos .hero-deco--floral { animation: decoSway 6s ease-in-out infinite; }
 
     /* Sombra única en el botón WhatsApp */
     .whatsapp-float {
@@ -3521,6 +4008,71 @@ body.modal-open .whatsapp-float {
 
 /* === OPTIMIZACIÓN ESPECÍFICA iOS / Touch devices === */
 @media (hover: none) and (pointer: coarse) {
+    /* Resplandor azul al tocar: sin esto, Android pinta un rectángulo gris feo
+       sobre cada elemento pulsable y iOS no da ninguna señal. */
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    [role="button"],
+    .product-card,
+    .nav__link,
+    .view-back,
+    .filter-select,
+    .search-bar__clear,
+    .modal__close,
+    .modal__action-btn,
+    .seasonal-section__more-btn,
+    .featured-card__btn,
+    .whatsapp-float,
+    .aura-launcher,
+    .aura-chip,
+    .aura-btn,
+    .aura-header__btn,
+    .aura-footer button {
+        -webkit-tap-highlight-color: rgba(201, 169, 110, 0.32);
+    }
+
+    /* Feedback de pulsación real. Antes todos los :hover (translateY, scale,
+       change de color) se anulaban en táctil sin poner nada en su lugar, así que
+       tocar una tarjeta no producía ninguna señal visible. */
+    .btn:active,
+    .product-card__details-btn:active,
+    .featured-card__btn:active,
+    .modal__action-btn:active,
+    .seasonal-section__more-btn:active,
+    .whatsapp-float:active,
+    .aura-launcher:active,
+    .aura-chip:active,
+    .aura-btn:active,
+    .aura-header__btn:active,
+    .aura-footer button:active {
+        transform: scale(0.96);
+        filter: brightness(0.92);
+        transition: transform 0.1s ease, filter 0.1s ease;
+    }
+
+    /* La tarjeta completa es clicable (abre el modal), necesita su propia señal */
+    .product-card:active {
+        transform: scale(0.985);
+        border-color: var(--color-primary);
+        box-shadow: var(--shadow-md);
+    }
+
+    .nav__link:active,
+    .view-back:active {
+        color: var(--color-primary);
+    }
+    .nav__link:active::after {
+        width: 100%;
+    }
+
+    .filter-select:active,
+    .search-bar__clear:active::before {
+        background: var(--color-primary);
+    }
+
     /* En pantallas táctiles, los :hover no deben disparar transformaciones */
     .product-card:hover {
         transform: none;
@@ -3534,10 +4086,21 @@ body.modal-open .whatsapp-float {
         transform: none;
     }
 
-    /* Decoraciones SVG sin animación en táctil */
+    /* Las decoraciones de evento SÍ se animan en táctil: pumpkinGlowPulse,
+       spiderHangSmooth y decoSway solo animan opacity/transform, que el navegador
+       compone en GPU y no cuesta rasterizado. Antes se mataban todas con
+       animation:none, y por eso el evento se veía plano y sin vida frente al PC.
+       Las que sí rasterizan (las que animan filter: drop-shadow) quedan cubiertas
+       por .perf-lite en eventos.css. */
     .hero-deco {
-        animation: none !important;
+        animation: none;
     }
+    /* .perf-lite se agrega en <html> por js/animaciones.js */
+    html:not(.perf-lite) .hero-deco--pumpkin { animation: pumpkinGlowPulse 4s ease-in-out infinite alternate; }
+    html:not(.perf-lite) .hero-deco--spider-hang { animation: spiderHangSmooth 7s ease-in-out infinite; }
+    html:not(.perf-lite) .hero-deco--rose,
+    html:not(.perf-lite) .hero-deco--amistad,
+    html:not(.perf-lite) .hero-deco--floral { animation: decoSway 6s ease-in-out infinite; }
 
     /* Quitar blur del header en iOS para mejorar FPS en modo normal, pero respetar eventos */
     .header:not(.event-themed) {

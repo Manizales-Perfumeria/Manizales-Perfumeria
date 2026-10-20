@@ -5,6 +5,73 @@
 // === PRODUCT DATA ===
 let products = [];
 
+// === IMAGENES DE TARJETA RESPONSIVAS ===
+// Los originales pesan ~129 KB y decodifican a ~5 MB de RAM cada uno. La seccion de
+// evento pinta 28 tarjetas a la vez, y eso desborda el presupuesto de imagenes en gama
+// baja. Las miniaturas de 600px (img/thumbs, generadas por data/generar_thumbs.py) pesan
+// ~38 KB; el navegador las elige solo cuando la tarjeta es pequena (es decir, en movil).
+var THUMBS_BASE = 'img/thumbs/';
+var SIZES_TARJETA_CARD = '(max-width: 768px) calc(50vw - 30px), 300px';
+
+// srcset separa candidatos por comas y descriptores por espacios, asi que una ruta con
+// espacios sin codificar rompe el parseo. encodeURI deja '/' y ':' intactos.
+function rutaImagenes(imagen) {
+    var codificada = encodeURI(imagen);
+    var sinExtension = imagen.replace(/\.[a-zA-Z0-9]+$/, '');
+    var thumb = encodeURI(THUMBS_BASE + sinExtension + '.webp');
+    return {
+        original: codificada,
+        thumb: thumb,
+        srcset: thumb + ' 600w, ' + codificada + ' 2000w'
+    };
+}
+
+function imagenesProducto(product) {
+    if (!product || !product.imagen) return null;
+    return rutaImagenes(product.imagen);
+}
+
+// Compartido con eventos.js para que las tarjetas del evento usen la misma miniatura
+window.imagenesProducto = imagenesProducto;
+window.SIZES_TARJETA_CARD = SIZES_TARJETA_CARD;
+
+// === BLOQUEO DE SCROLL COMPARTIDO ===
+// Tres features compiten por el mismo body.style.overflow (menu movil, modal de
+// producto y chat de Aura AI). Con un unico flag global, cerrar uno liberaba el
+// scroll aunque los otros dos siguieran abiertos. Esto cuenta las aperturas.
+//
+// OJO: va a NIVEL SUPERIOR, no dentro del callback DOMContentLoaded. showView()
+// esta fuera de ese callback y lo llama: si las funciones vivieran dentro, daria
+// ReferenceError y showView se cortaria ANTES de reaplicar el tema del evento y
+// las animaciones de entrada.
+let scrollLocks = 0;
+
+function lockScroll() {
+    scrollLocks += 1;
+    if (scrollLocks === 1) {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.classList.add('scroll-locked');
+    }
+}
+
+function unlockScroll() {
+    scrollLocks = Math.max(0, scrollLocks - 1);
+    if (scrollLocks === 0) {
+        document.body.style.overflow = '';
+        document.documentElement.classList.remove('scroll-locked');
+    }
+}
+
+window.ManizalesScrollLock = {
+    lock: lockScroll,
+    unlock: unlockScroll,
+    reset: function () {
+        scrollLocks = 0;
+        document.body.style.overflow = '';
+        document.documentElement.classList.remove('scroll-locked');
+    }
+};
+
 // === CURRENT ACTIVE VIEW TRACKER ===
 let currentView = 'inicio';
 
@@ -84,7 +151,7 @@ function showView(viewId, updateHistory) {
     const navOverlay = document.getElementById('nav-overlay');
     if (navMenu) {
         navMenu.classList.remove('active');
-        document.body.style.overflow = '';
+        unlockScroll();
     }
     if (navOverlay) {
         navOverlay.classList.remove('active');
@@ -187,7 +254,7 @@ function openProductModal(productId, updateHistory) {
                 <div class="modal__grid">
                     <div class="modal__image-section">
                         <div class="modal__image-container">
-                            <img src="${product.imagen}" alt="${product.nombre}" class="modal__image" onerror="this.style.display='none'; this.parentElement.querySelector('.modal__fallback').style.display='flex';">
+                            <img src="${product.imagen}" alt="${product.nombre}" class="modal__image" decoding="async" onerror="this.style.display='none'; this.parentElement.querySelector('.modal__fallback').style.display='flex';">
                             <div class="modal__fallback" style="display:none;">
                                 <span style="font-size: 80px;">${product.emoji || '✦'}</span>
                             </div>
@@ -265,7 +332,7 @@ function openProductModal(productId, updateHistory) {
     
     // Add modal to body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    document.body.style.overflow = 'hidden';
+    lockScroll();
     document.body.classList.add('modal-open');
 
     if (updateHistory) {
@@ -290,7 +357,7 @@ function closeProductModal(updateHistory) {
         modal.classList.add('modal--closing');
         setTimeout(function() {
             modal.remove();
-            document.body.style.overflow = '';
+            unlockScroll();
             document.body.classList.remove('modal-open');
         }, 220);
     }
@@ -449,20 +516,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // === MOBILE MENU ===
+
+
+// === MOBILE MENU ===
     const navToggle = document.getElementById('nav-toggle');
     const navClose = document.getElementById('nav-close');
     const navMenu = document.getElementById('nav-menu');
     const navOverlay = document.getElementById('nav-overlay');
 
+    // El menu empuja una entrada #menu al historial para que el boton atras lo
+    // cierre. Hay que acordarse de que la empujamos: para cuando llega el
+    // popstate la clase .active ya se quito, asi que el caso 3 de abajo no la
+    // detectaba y caia en showView() -> scrollTo(0,0), tirando al usuario al
+    // inicio de la pagina cada vez que cerraba el menu.
+    let menuStatePushed = false;
+
     function openMobileNav(updateHistory) {
         if (updateHistory === undefined) updateHistory = true;
         if (navMenu) navMenu.classList.add('active');
         if (navOverlay) navOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+        lockScroll();
         if (updateHistory) {
             try {
                 history.pushState({ type: 'menu' }, '', '#menu');
+                menuStatePushed = true;
             } catch(e) {}
         }
     }
@@ -471,9 +549,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (updateHistory === undefined) updateHistory = true;
         if (navMenu) navMenu.classList.remove('active');
         if (navOverlay) navOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+        unlockScroll();
         if (updateHistory && window.location.hash === '#menu') {
             try {
+                // Se limpia antes de salir: el popstate de este back debe ver
+                // que la entrada del menu ya fue cerrada por nosotros
+                menuStatePushed = false;
                 history.back();
             } catch(e) {}
         }
@@ -548,13 +630,18 @@ function initHistoryNavigation() {
             }
         }
 
-        // 3. Si el menú móvil está abierto, cerrarlo
+        // 3. Si el menú móvil está abierto, cerrarlo sin navegar.
+        //    menuStatePushed cubre el caso en que ya lo cerramos nosotros y el
+        //    popstate es el eco de ese history.back(): entonces NO hay que mostrar
+        //    ninguna vista, o el usuario vuelve al inicio de la pagina.
         var navMenu = document.getElementById('nav-menu');
-        if (navMenu && navMenu.classList.contains('active')) {
+        if (menuStatePushed || (navMenu && navMenu.classList.contains('active'))) {
+            menuStatePushed = false;
             var navOverlay = document.getElementById('nav-overlay');
             if (navMenu) navMenu.classList.remove('active');
             if (navOverlay) navOverlay.classList.remove('active');
-            document.body.style.overflow = '';
+            if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+            unlockScroll();
             return;
         }
 
@@ -1045,9 +1132,13 @@ function createProductCard(product, viewTarget) {
         intensityDots += '<span class="product-card__intensity-dot' + (i <= intensityLevel ? ' active' : '') + '"></span>';
     }
     
-    var imageHtml = '<img src="' + product.imagen + '" alt="' + product.nombre + '" loading="lazy" onerror="this.onerror=null; this.style.display=\'none\'; this.parentElement.querySelector(\'.product-card__fallback\').style.display=\'flex\';">';
-    
-    var fallbackHtml = '<div class="product-card__fallback" style="display:none;">' + (product.emoji || '✦') + '</div>';
+    var img = imagenesProducto(product);
+    var imageHtml = img
+        ? '<img src="' + img.original + '" srcset="' + img.srcset + '" sizes="' + SIZES_TARJETA_CARD + '" alt="' + product.nombre + '" loading="lazy" decoding="async" onerror="this.onerror=null; this.style.display=\'none\'; this.parentElement.querySelector(\'.product-card__fallback\').style.display=\'flex\';">'
+        : '';
+
+    // Sin imagen el fallback se muestra de entrada; con imagen lo destapa el onerror
+    var fallbackHtml = '<div class="product-card__fallback"' + (img ? ' style="display:none;"' : '') + '>' + (product.emoji || '✦') + '</div>';
     
     var creativeHtml = creativeText 
         ? '<p class="product-card__creative">' + creativeText + '</p>'

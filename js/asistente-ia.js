@@ -13,6 +13,7 @@ var AuraIA = (function() {
         unreadCount: 0,
         currentFocusProduct: null,     // Último perfume mencionado o recomendado
         lastRecommendedIds: [],        // IDs de la última recomendación
+        ultimaConsulta: null,            // Slots de la última búsqueda (base de los refinamientos)
         history: [],                   // Historial de mensajes en sesión
         userPreferences: {
             gender: null,              // 'hombre', 'mujer', 'unisex'
@@ -52,7 +53,11 @@ var AuraIA = (function() {
         saludos: ['hola', 'buenas', 'buenos dias', 'buenas tardes', 'buenas noches', 'que tal', 'como estas', 'hey', 'saludos', 'hola aura', 'buen dia', 'parce', 'amigo', 'quiubo', 'que mas', 'buenas noches aura', 'hola buenas'],
 
         // Género
-        hombre: ['hombre', 'hombres', 'masculino', 'caballero', 'chico', 'para mi novio', 'para mi esposo', 'para mi papa', 'para mi hermano', 'varonil', 'masculina', 'man', 'caballeros', 'para hombre', 'de hombre', 'para el', 'para un hombre', 'para un man', 'mi novio', 'mi esposo', 'mi papa', 'mi hermano', 'mi hijo', 'para mi hijo', 'para un chico'],
+        hombre: ['hombre', 'hombres', 'masculino', 'caballero', 'chico', 'para mi novio', 'para mi esposo', 'para mi papa', 'para mi hermano', 'varonil', 'masculina', 'man', 'caballeros', 'para hombre', 'de hombre', 'para un hombre', 'para un man', 'mi novio', 'mi esposo', 'mi papa', 'mi hermano', 'mi hijo', 'para mi hijo', 'para un chico'],
+        // OJO: 'para el' (de "para él") NO va aqui. Al normalizar se le quitan
+        // los acentos y queda igual que "para el día de la madre", que es un
+        // REGALO, no un hombre. El caso "para él" se resuelve aparte, mirando
+        // si la frase termina en "para el".
         mujer: ['mujer', 'mujeres', 'femenino', 'dama', 'chica', 'para mi novia', 'para mi esposa', 'para mi mama', 'para mi hermana', 'femenina', 'senora', 'damas', 'para mujer', 'de mujer', 'para ella', 'para una mujer', 'mi novia', 'mi esposa', 'mi mama', 'mi hermana', 'mi hija', 'para mi hija', 'para una chica', 'para una senora'],
         unisex: ['unisex', 'ambos', 'para los dos', 'compartir', 'neutro', 'mixto', 'para cualquiera', 'para hombre o mujer'],
 
@@ -374,6 +379,425 @@ var AuraIA = (function() {
         return norm;
     }
 
+    // =========================================================
+    //  RAZONAMIENTO: ENMASCARADO DE NEGACIONES
+    // =========================================================
+    // Antes, "dame uno que NO sea dulce" seguia cumpliendo containsAny() con la
+    // palabra 'dulce', y el bot respondia pitching aromas dulces. Ahora se tapan
+    // los tramos negados antes de buscar coincidencias positivas, pero se guardan
+    // aparte para saber que exclusion quiere el usuario.
+    var NEGATION_PATTERNS = [
+        // "que no sea dulce", "no quiero dulce", y las cadenas "no sea ni dulce ni amaderado"
+        /\b(?:que\s+)?no\s+(?:quiero|me\s+gusta|guste|sea|sean|busco|busques|prefiero|prefiera|huela|huelas|tenga|tengan|debe\s+ser)\s+((?:ni\s+)?[a-z]+(?:\s+ni\s+[a-z]+)*)/g,
+        // "sin notas de vainilla", "sin que sea dulce"
+        /\bsin\s+(?:notas?\s+de\s+|acordes?\s+de\s+|que\s+sea\s+|que\s+)?([a-z]+)/g,
+        // "evita dulce", "descarta amaderado", "nada de Oriental"
+        /\b(?:evita|evitar|descarta|descartar|nada\s+de|fuera)\s+(?:el\s+|la\s+|lo\s+)?([a-z]+)/g
+    ];
+
+    function enmascararNegaciones(text) {
+        var norm = normalize(text);
+        var excluidas = [];
+
+        for (var i = 0; i < NEGATION_PATTERNS.length; i++) {
+            var re = new RegExp(NEGATION_PATTERNS[i].source, 'g');
+            var m;
+            while ((m = re.exec(norm)) !== null) {
+                if (!m[1]) continue;
+                // Una coincidencia puede traer varias: "ni dulce ni amaderado"
+                var partes = m[1].split(/\s+ni\s+|\s+/);
+                for (var p = 0; p < partes.length; p++) {
+                    var palabra = partes[p];
+                    if (!palabra || palabra === 'ni') continue;
+                    // 'el','la','lo','mas' no son familias: no se cuentan como
+                    // exclusión para no romper frases como "no sea el mas caro"
+                    if (palabra === 'el' || palabra === 'la' || palabra === 'lo' ||
+                        palabra === 'mas' || palabra === 'menos' || palabra === 'muy') {
+                        continue;
+                    }
+                    excluidas.push(palabra);
+                }
+                // Se reemplaza el tramo por un token neutro: asi el termino
+                // excluido deja de disparar los detectores positivos
+                norm = norm.slice(0, m.index) + ' __negado__ ' + norm.slice(m.index + m[0].length);
+                re.lastIndex = m.index + 10;
+            }
+        }
+        return { texto: norm, excluidas: excluidas };
+    }
+
+    // Comprueba si una palabra excluida corresponde a una familia de aromas
+    // ('amaderado' -> 'amaderado', 'vainilla' -> 'dulce', etc.)
+    var FAMILIA_POR_PALABRA = {
+        dulce: 'dulce', vainilla: 'dulce', caramelo: 'dulce', praline: 'dulce',
+        gourmand: 'dulce', golosina: 'dulce',
+        amaderado: 'amaderado', madera: 'amaderado', oud: 'amaderado',
+        sándalo: 'amaderado', sandalo: 'amaderado', cedro: 'amaderado',
+        vetiver: 'amaderado', pachuli: 'amaderado', incienso: 'amaderado',
+        citrico: 'citrico', cítrico: 'citrico', limon: 'citrico', bergamota: 'citrico',
+        naranja: 'citrico', pomelo: 'citrico',
+        floral: 'floral', flor: 'floral', flores: 'floral', rosa: 'floral',
+        jazmin: 'floral', jazmín: 'floral', lavanda: 'floral',
+        oriental: 'oriental', canela: 'oriental', cardamomo: 'oriental',
+        cuero: 'cuero', piel: 'cuero',
+        acuatica: 'acuatica', acuática: 'acuatica', marino: 'acuatica',
+        mar: 'acuatica', agua: 'acuatica',
+        frutal: 'frutal', fruta: 'frutal', frutas: 'frutal', mandarina: 'frutal'
+    };
+
+    function familiasExcluidasDe(texto) {
+        var neg = enmascararNegaciones(texto);
+        var familias = [];
+        for (var i = 0; i < neg.excluidas.length; i++) {
+            var fam = FAMILIA_POR_PALABRA[neg.excluidas[i]];
+            if (fam && familias.indexOf(fam) === -1) familias.push(fam);
+        }
+        return familias;
+    }
+
+    // =========================================================
+    //  RAZONAMIENTO: ¿LA CONSULTA ES DE PERFUMERÍA?
+    // =========================================================
+    // El guardrail de fuera-de-dominio se evaluaba antes que todo y con palabras
+    // que tambien son vocabulario de la tienda ('clima', 'trabajo', 'tiempo',
+    // 'amor'), asi que rechazaba consultas legitimas. Ahora el guardrail solo
+    // aplica si la consulta NO tiene ninguna senal de perfumeria.
+    var CACHE_SENAL_DOMINIO = null;
+
+    function esConsultaDePerfumeria(text) {
+        if (CACHE_SENAL_DOMINIO === null) {
+            var set = {};
+            for (var key in DICTIONARY) {
+                if (!DICTIONARY.hasOwnProperty(key)) continue;
+                var list = DICTIONARY[key];
+                if (!list || !list.length) continue;
+                for (var i = 0; i < list.length; i++) {
+                    var n = normalize(list[i]);
+                    if (n.length > 2) set[n] = true;
+                }
+            }
+            CACHE_SENAL_DOMINIO = set;
+        }
+
+        var norm = normalize(text);
+        // 1) marca de perfume explicita
+        if (/\b(perfume|perfumeria|fragancia|aroma|olor|olores|notas|eau|edp|edt|parfum)\b/.test(norm)) {
+            return true;
+        }
+        // 2) alguna palabra del diccionario de intencion
+        var palabras = norm.split(' ');
+        for (var k = 0; k < palabras.length; k++) {
+            if (palabras[k].length > 2 && CACHE_SENAL_DOMINIO[palabras[k]]) return true;
+        }
+        // 3) coincidencia EXACTA con un nombre o marca del catalogo.
+        //    Ojo: no se usa la busqueda difusa aqui, porque "arroz" o "mundial"
+        //    quedan a distancia de edicion 1 de varios nombres y eso hacia que
+        //    "como hago arroz" pasara como consulta de perfumeria, anulando el
+        //    guardrail de fuera de dominio.
+        var indice = construirIndiceCatalogo();
+        for (var p = 0; p < palabras.length; p++) {
+            var tok = palabras[p];
+            if (tok.length < 3) continue;
+            if (indice.porNombre[tok] || indice.porToken[tok] || indice.porMarca[tok]) return true;
+        }
+        return false;
+    }
+
+    // =========================================================
+    //  RAZONAMIENTO: ¿LA CONSULTA ES ESPECÍFICA O GENÉRICA?
+    // =========================================================
+    // 'DICTIONARY.masvendidos' incluye palabras genéricas como 'recomienda', y ese
+    // handler se evaluaba ANTES que la ocasión, el regalo y el presupuesto. Por eso
+    // "recomiendame algo para el día de la madre" devolvía las 3 más vendidas de la
+    // tienda: la palabra 'recomienda' se comía toda la consulta.
+    // Ahora solo se atiende como genérica si el usuario NO dio ninguna pista concreta.
+    var OCASIONES_CLAVE = ['navidad', 'sanvalentin', 'halloween', 'diamadre', 'diapadre',
+                           'blackfriday', 'amorYamistad', 'cita', 'oficina', 'fiesta',
+                           'calor', 'frio', 'gala', 'gym'];
+
+    function consultaTieneEspecificidad(text) {
+        var positivo = enmascararNegaciones(text).texto;
+
+        // pista de ocasión
+        for (var i = 0; i < OCASIONES_CLAVE.length; i++) {
+            if (containsAny(positivo, DICTIONARY[OCASIONES_CLAVE[i]])) return true;
+        }
+        // pista de regalo
+        if (detectGiftIntent(text)) return true;
+        // pista de familia olfativa
+        var fams = ['amaderado', 'dulce', 'citrico', 'floral', 'oriental', 'cuero', 'acuatica', 'frutal'];
+        for (var j = 0; j < fams.length; j++) {
+            if (containsAny(positivo, DICTIONARY[fams[j]])) return true;
+        }
+        // pista de género
+        if (containsAny(positivo, DICTIONARY.hombre) ||
+            containsAny(positivo, DICTIONARY.mujer) ||
+            containsAny(positivo, DICTIONARY.unisex)) return true;
+        // pista de presupuesto o precio
+        if (extractBudget(text)) return true;
+        if (/\b(barato|barata|economic|economica|precio|cuanto|cuesta|vale|presupuesto|caro)\b/.test(normalize(text))) {
+            return true;
+        }
+        // producto concreto mencionado
+        if (buscarProductoEnCatalogo(text)) return true;
+        return false;
+    }
+
+    // =========================================================
+    //  RAZONAMIENTO: ÍNDICE Y BÚSQUEDA DE PRODUCTO POR NOMBRE
+    // =========================================================
+    // Antes solo encontraba un producto si el texto contenia el NOMBRE COMPLETO
+    // normalizado, asi que "¿cuánto el 9pm?" o "el de Armaf" no lo encontraban.
+    var CATALOGO_INDICE = null;
+
+    function construirIndiceCatalogo() {
+        if (CATALOGO_INDICE) return CATALOGO_INDICE;
+
+        var catalog = getCatalog().filter(function(p) { return p && p.activo !== false; });
+        var porNombre = {};   // nombre normalizado -> producto
+        var porToken = {};    // token -> [productos]
+        var porMarca = {};    // marca normalizada -> [productos]
+        var conteoToken = {}; // token -> cuantas fragancias lo tienen
+
+        for (var i = 0; i < catalog.length; i++) {
+            var p = catalog[i];
+            var normNombre = normalize(p.nombre || '');
+            if (normNombre) porNombre[normNombre] = p;
+
+            var normMarca = normalize(p.marca || '');
+            if (normMarca) {
+                if (!porMarca[normMarca]) porMarca[normMarca] = [];
+                porMarca[normMarca].push(p);
+            }
+
+            var tokens = normNombre.split(' ').filter(function(t) {
+                // Minimo 3 letras: "la", "de", "el" no identifican nada y
+                // hacian que "donde queda la tienda" terminara en "La Belle".
+                // (Los nombres cortos de verdad, como "9PM" o "212", se
+                // conservan porque tienen 3 o mas caracteres.)
+                return t.length >= 3 && STOP_WORDS.indexOf(t) === -1;
+            });
+            for (var j = 0; j < tokens.length; j++) {
+                if (!porToken[tokens[j]]) porToken[tokens[j]] = [];
+                porToken[tokens[j]].push(p);
+            }
+        }
+
+        for (var tk in porToken) {
+            if (porToken.hasOwnProperty(tk)) conteoToken[tk] = porToken[tk].length;
+        }
+
+        CATALOGO_INDICE = {
+            porNombre: porNombre,
+            porToken: porToken,
+            porMarca: porMarca,
+            conteoToken: conteoToken,
+            todos: catalog
+        };
+        return CATALOGO_INDICE;
+    }
+
+    function invalidarIndiceCatalogo() {
+        CATALOGO_INDICE = null;
+        CACHE_SENAL_DOMINIO = null;
+    }
+
+    // Distancia de Damerau-Levenshtein acotada, para tolerar errores de tipeo
+    function distanciaCercana(a, b) {
+        if (a === b) return 0;
+        if (!a || !b) return 99;
+        if (Math.abs(a.length - b.length) > 2) return 99;
+        var prev2 = [], prev = [], cur = [];
+        for (var j = 0; j <= b.length; j++) prev[j] = j;
+        for (var i = 1; i <= a.length; i++) {
+            cur[0] = i;
+            for (var jj = 1; jj <= b.length; jj++) {
+                var coste = a[i - 1] === b[jj - 1] ? 0 : 1;
+                var v = Math.min(cur[jj - 1] + 1, prev[jj] + 1, prev[jj - 1] + coste);
+                // transposition (Damerau): "ab" -> "ba"
+                if (i > 1 && jj > 1 && a[i - 1] === b[jj - 2] && a[i - 2] === b[jj - 1]) {
+                    v = Math.min(v, prev2[jj - 2] + 1);
+                }
+                cur[jj] = v;
+            }
+            prev2 = prev;
+            prev = cur.slice();
+        }
+        return prev[b.length];
+    }
+
+    /**
+     * Busca un producto concreto en el texto. Devuelve {product, confianza} o null.
+     * Estrategia: nombre exacto -> prefijo/frase -> token con coincidencias ->
+     * token por cercania (typos) -> marca.
+     */
+    // Comprueba si una frase aparece en el texto respetando limites de palabra.
+    // Sin esto, "son originales" contenia el nombre de producto "Original".
+    function contienePalabraFrase(texto, frase) {
+        if (!texto || !frase) return false;
+        var re = new RegExp('(^|[^\\w])' + frase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^\\w]|$)', 'i');
+        return re.test(texto);
+    }
+
+    function buscarProductoEnCatalogo(text) {
+        var indice = construirIndiceCatalogo();
+        if (!indice.todos.length) return null;
+
+        var norm = normalize(text);
+        if (!norm) return null;
+
+        // 0) El NOMBRE COMPLETO del producto aparece en la frase: es definitivo.
+        //    Se revisa antes que los tokens sueltos para no confundir
+        //    "Club de Nuit" con cualquier producto que tenga "de" o "nuit".
+        var clavesNombre = Object.keys(indice.porNombre);
+        for (var n = 0; n < clavesNombre.length; n++) {
+            var claveNombre = clavesNombre[n];
+            if (claveNombre.length >= 5 && contienePalabraFrase(norm, claveNombre)) {
+                return { product: indice.porNombre[claveNombre], confianza: 0.95 };
+            }
+        }
+
+        // 1) coincidencia por token exacto (respeta \b para no cortar 9pm/9PM)
+        var palabras = norm.split(' ');
+        var candidatos = {};
+
+        for (var i = 0; i < palabras.length; i++) {
+            var tok = palabras[i];
+            if (tok.length < 2) continue;
+            // Token demasiado comun ("de" esta en 19 fragancias, "pour" en 14):
+            // no identifica ningun producto y hacia que cualquier frase
+            // terminara recommending uno al azar.
+            if (indice.conteoToken[tok] > 8) continue;
+            var lista = indice.porToken[tok];
+            if (lista && lista.length) {
+                for (var k = 0; k < lista.length; k++) candidatos[lista[k].id] = lista[k];
+            }
+        }
+
+        if (Object.keys(candidatos).length) {
+            // Puntua por cuantos tokens de la consulta encuentra
+            var mejor = null;
+            var mejorPuntaje = -1;
+            for (var cid in candidatos) {
+                var prod = candidatos[cid];
+                var normNombre = normalize(prod.nombre || '');
+                var puntos = 0;
+                for (var t = 0; t < palabras.length; t++) {
+                    if (palabras[t].length > 1 && normNombre.indexOf(palabras[t]) !== -1) puntos++;
+                }
+                if (norm.indexOf(normNombre) !== -1) puntos += 3;
+                if (puntos > mejorPuntaje) { mejorPuntaje = puntos; mejor = prod; }
+            }
+            if (mejor) {
+                var conf = Math.min(1, 0.5 + mejorPuntaje * 0.12);
+                // Si lo unico que coincidio fue la MARCA y esa marca tiene varias
+                // fragancias, no es un producto concreto. "recomiendame perfumes
+                // de Armaf" debe ser una recomendacion, no un producto.
+                var normNombreM = normalize(mejor.nombre || '');
+                var normMarcaM = normalize(mejor.marca || '');
+                var coincideNombre = false, coincideMarca = false;
+                for (var t2 = 0; t2 < palabras.length; t2++) {
+                    if (palabras[t2].length < 2) continue;
+                    if (indice.conteoToken[palabras[t2]] > 8) continue;
+                    if (normNombreM.indexOf(palabras[t2]) !== -1) coincideNombre = true;
+                    else if (normMarcaM.indexOf(palabras[t2]) !== -1) coincideMarca = true;
+                }
+                if (coincideMarca && !coincideNombre) {
+                    var deLaMarca = indice.porMarca[normMarcaM];
+                    if (!deLaMarca || deLaMarca.length > 2) conf = 0.4;
+                }
+                return { product: mejor, confianza: conf };
+            }
+        }
+
+        // 2) token por cercania (tolerancia a typos: "fajhar" -> "fakhar").
+        //    Solo si la consulta PARECE un nombre de producto: maximo 3 palabras,
+        //    sin palabras de pregunta y con un token DISTINTIVO (pocas
+        //    fragancias lo tienen). Sin este filtro "cuanto dura un perfume" se
+        //    comia "Erba Pura" (dura ~ pura) y cualquier pregunta terminaba
+        //   devolviendo un producto.
+        var PALABRAS_PREGUNTA_FUERTE = ['cuanto', 'cuanta', 'precio', 'cuesta', 'vale',
+                                        'notas', 'huele', 'dura', 'duracion', 'cuando',
+                                        'donde', 'para', 'tienen', 'venden', 'busco',
+                                        'son', 'es', 'esta', 'estan', 'tiene', 'hay',
+                                        'sabes', 'puede', 'pueden', 'quieres', 'tiene'];
+        var pareceNombre = palabras.length <= 3;
+        for (var q = 0; q < palabras.length; q++) {
+            if (PALABRAS_PREGUNTA_FUERTE.indexOf(palabras[q]) !== -1) pareceNombre = false;
+        }
+
+        if (pareceNombre) {
+            for (var i2 = 0; i2 < palabras.length; i2++) {
+                var t2 = palabras[i2];
+                if (t2.length < 4) continue;
+                var claves = Object.keys(indice.porToken);
+                for (var c = 0; c < claves.length; c++) {
+                    var clave = claves[c];
+                    if (clave.length < 4) continue;
+                    if (Math.abs(clave.length - t2.length) > 2) continue;
+                    // Token demasiado comun: "pura" esta en muchas fragancias y
+                    // cualquier palabra parecida daria un falso positivo
+                    if (indice.conteoToken[clave] > 4) continue;
+                    if (distanciaCercana(t2, clave) <= (t2.length > 6 ? 2 : 1)) {
+                        var coincide = indice.porToken[clave];
+                        if (coincide && coincide.length) {
+                            return { product: coincide[0], confianza: 0.55 };
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    //  RAZONAMIENTO: RANGO REAL DE PRECIOS DEL CATÁLOGO
+    // =========================================================
+    function rangoPrecios() {
+        var indice = construirIndiceCatalogo();
+        var min = Infinity, max = 0;
+        for (var i = 0; i < indice.todos.length; i++) {
+            var pr = indice.todos[i].precio;
+            if (typeof pr === 'number' && pr > 0) {
+                if (pr < min) min = pr;
+                if (pr > max) max = pr;
+            }
+        }
+        if (min === Infinity) return null;
+        return { min: min, max: max };
+    }
+
+    function formatoMoneda(n) {
+        return '$' + Math.round(n).toLocaleString('es-CO');
+    }
+
+    // =========================================================
+    //  RAZONAMIENTO: SELECCIÓN DIVERSA
+    // =========================================================
+    // El orden era siempre el mismo (sort estable por puntaje + slice(0,3)), asi
+    // que la misma consulta daba SIEMPRE los mismos 3 productos. Se rota la
+    // ventana de resultados de forma estable a partir de la consulta, para que
+    // dos mensajes parecidos exploren opciones distintas sin perder el orden de
+    // relevancia.
+    function variarResultados(lista, semilla) {
+        if (!lista || lista.length <= 3) return lista;
+        // La ventana de rotación se limita a los 6 mejores: rotar sobre toda la
+        // lista podría mostrar el puesto 98 de 100, es decir, productos que
+        // apenas superan el umbral de relevancia.
+        var top = lista.slice(0, 6);
+        if (top.length <= 3) return top;
+
+        var hash = 0;
+        var s = String(semilla || '');
+        for (var i = 0; i < s.length; i++) {
+            hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
+        }
+        var extra = Math.abs(hash) % (top.length - 2);
+        if (extra === 0) return top.slice(0, 3);
+        return top.slice(extra, extra + 3);
+    }
+
     // === DETECCIÓN DE INTENCIÓN DE REGALO ===
     function detectGiftIntent(text) {
         return containsAny(text, DICTIONARY.regalo);
@@ -549,11 +973,20 @@ var AuraIA = (function() {
         var catalog = getCatalog().filter(function(p) { return p && p.activo !== false; });
         if (!catalog.length) return [];
 
-        // Filtro por presupuesto si existe
+        // Filtro por presupuesto si existe.
+        // Antes: si NADA cumplía el presupuesto, se ignoraba el filtro en silencio y
+        // devolvía las fragancias más caras diciendo que eran "op económicas". El
+        // catálogo real empieza en $110.000, así que cualquier presupuesto menor
+        // quedaba sin satisfacer y el usuario recibía una respuesta falsa.
         var budgetMax = options.budgetMax || null;
+        var budgetImposible = false;
         if (budgetMax) {
             var filtered = catalog.filter(function(p) { return !p.precio || p.precio <= budgetMax; });
-            if (filtered.length > 0) catalog = filtered;
+            if (filtered.length > 0) {
+                catalog = filtered;
+            } else {
+                budgetImposible = true;
+            }
         }
 
         // Familias excluidas por negación
@@ -705,10 +1138,41 @@ var AuraIA = (function() {
         // Filtrar y ordenar por puntuación
         scored = scored.filter(function(s) { return s.score >= 35 && s.reasons.filter(function(r) { return r.indexOf('EXCLUIDO') === -1; }).length > 0; });
         scored.sort(function(a, b) { return b.score - a.score; });
-        return scored.slice(0, 3).map(function(s) { return s.product; });
+
+        var resultados;
+        if (scored.length > 3) {
+            // Se fija SIEMPRE el mejor puntaje (es el que mejor encaja) y se rotan los
+            // siguientes. Antes sort estable + slice(0,3) devolvia SIEMPRE los mismos
+            // 3 productos para la misma consulta, y dos frases equivalentes daba
+            // respuestas byte a byte idénticas.
+            var cabeza = [scored[0]];
+            var resto = variarResultados(scored.slice(1).map(function(s) { return s.product; }), queryText);
+            // 1 fija + 2 rotados = 3, que es lo que espera la UI
+            resultados = cabeza.map(function(s) { return s.product; }).concat(resto.slice(0, 2));
+        } else {
+            resultados = scored.slice(0, 3).map(function(s) { return s.product; });
+        }
+
+        if (budgetImposible) {
+            // Ninguna fragancia cumple el presupuesto. Se devuelven las más
+            // baratas (que sí son las más baratas de la tienda, así que no es
+            // inventar nada) pero se marca el arreglo para que quien llama pueda
+            // decirlo con palabras en vez de presentarlas como "opciones económicas".
+            resultados.presupuestoInsatisfacible = true;
+            var rango = rangoPrecios();
+            resultados.precioMinimoCatalogo = rango ? rango.min : null;
+        }
+        return resultados;
     }
 
     function updateUserPreferencesFromMessage(text) {
+        // La búsqueda positiva se hace sobre el texto CON LAS NEGACIONES ENMASCARADAS.
+        // Antes se usaba el texto crudo, así que "dame uno que no sea dulce" terminaba
+        // fijando scentType='dulce' y el bot seguía pitchando aromas dulces.
+        var neg = enmascararNegaciones(text);
+        var positivo = neg.texto;
+        var norm = normalize(text);
+
         // Detección de cambio de opinión / reinicio de contexto
         var isContextSwitch = containsAny(text, [
             'cambie de opinion', 'cambie de parecer', 'mejor no', 'o mejor', 'ahora quiero',
@@ -722,6 +1186,8 @@ var AuraIA = (function() {
             state.userPreferences.potency = null;
             state.userPreferences.excludedFamilies = [];
             state.currentFocusProduct = null;
+            state.ultimaConsulta = null;
+            state.lastRecommendedIds = [];
         }
 
         // Actualizar presupuesto
@@ -730,6 +1196,11 @@ var AuraIA = (function() {
 
         // Actualizar negaciones acumulativas
         var newExcluded = extractNegations(text);
+        // Lo que el usuario negó explícitamente también cuenta como exclusión,
+        // aunque extractNegations (que solo mira el campo tipo_olor) no lo haya visto
+        familiasExcluidasDe(text).forEach(function(f) {
+            if (newExcluded.indexOf(f) === -1) newExcluded.push(f);
+        });
         if (newExcluded.length > 0) {
             state.userPreferences.excludedFamilies = state.userPreferences.excludedFamilies || [];
             newExcluded.forEach(function(f) {
@@ -739,31 +1210,33 @@ var AuraIA = (function() {
             });
         }
 
-        if (containsAny(text, DICTIONARY.hombre)) {
+        if (containsAny(positivo, DICTIONARY.hombre)) {
             state.userPreferences.gender = 'hombre';
-        } else if (containsAny(text, DICTIONARY.mujer)) {
+        } else if (detectaParaEl(norm)) {
+            state.userPreferences.gender = 'hombre';
+        } else if (containsAny(positivo, DICTIONARY.mujer)) {
             state.userPreferences.gender = 'mujer';
-        } else if (containsAny(text, DICTIONARY.unisex)) {
+        } else if (containsAny(positivo, DICTIONARY.unisex)) {
             state.userPreferences.gender = 'unisex';
         }
 
-        if (containsAny(text, DICTIONARY.potencia)) {
+        if (containsAny(positivo, DICTIONARY.potencia)) {
             state.userPreferences.potency = 'alta';
         }
 
         var occasions = ['navidad', 'sanvalentin', 'halloween', 'diamadre', 'diapadre', 'blackfriday', 'amorYamistad', 'cita', 'oficina', 'fiesta', 'calor', 'frio', 'gala', 'gym'];
         for (var i = 0; i < occasions.length; i++) {
             var occ = occasions[i];
-            if (DICTIONARY[occ] && containsAny(text, DICTIONARY[occ])) {
+            if (DICTIONARY[occ] && containsAny(positivo, DICTIONARY[occ])) {
                 state.userPreferences.occasion = occ;
                 break;
             }
         }
 
-        var families = ['dulce', 'amaderado', 'citrico', 'floral', 'oriental', 'cuero', 'acuatica', 'frutal'];
+        var families = ['amaderado', 'dulce', 'citrico', 'floral', 'oriental', 'cuero', 'acuatica', 'frutal'];
         for (var j = 0; j < families.length; j++) {
             var fam = families[j];
-            if (containsAny(text, DICTIONARY[fam])) {
+            if (containsAny(positivo, DICTIONARY[fam])) {
                 state.userPreferences.scentType = fam;
                 break;
             }
@@ -792,18 +1265,727 @@ var AuraIA = (function() {
         return containsAny(text, DISCOUNT_KEYWORDS);
     }
 
+    // =========================================================
+    //  MOTOR DE DIÁLOGO
+    //  Slots, memoria de la conversación y router con puntaje.
+    // =========================================================
+    //
+    // processUserMessage era una cadena de ~45 if/return en la que ganaba la
+    // PRIMERA coincidencia. Eso hacia que "recomiendame un perfume para el dia
+    // de la madre" devolviera las 3 mas vendidas (ganaba la palabra
+    // "recomienda") y que "dame algo mas barato" se fuera a WhatsApp (ganaba
+    // "negociacion").
+    //
+    // Ahora, antes de la cadena legacy, se extraen los slots de la frase y se
+    // puntuan las intenciones. El router solo entra si gana con confianza; si
+    // no, sigue la cadena legacy, que responde las FAQs, politicas y datos de
+    // la tienda con el copy que ya tenias.
+
+    // Confianza minima para que el router tome el control de la conversacion.
+    // Es el UNICO mando: bajarlo hace que el asistente maneje mas formas de
+    // escritura con el motor nuevo (con explicacion de criterios, refinamiento
+    // y orden por precio) en vez de la cadena legacy.
+    // Medido con 30 consultas reales:
+    //   35 (actual) -> refinamientos por exclusion ("sin vainilla") y por
+    //                   cambio de ocasion ("algo para la oficina"), ademas de
+    //                   los que ya tenian evidencia clara
+    //   30          -> suma esos dos
+    //   25          -> suma "quiero/busco/dame un perfume" (peticion generica)
+    // Las preguntas de la tienda y el flujo de regalo NO dependen de este valor:
+    // estan bloqueados por PREGUNTAS_DE_TIENDA y PREGUNTAS_DE_REGALO.
+    var UMBRAL_ROUTER = 35;
+
+    // Verbos y formulas que indican "quiero que me recomiendes algo"
+    var PALABRAS_RECOMENDAR = [
+        'recomienda', 'recomiendame', 'recomendame', 'sugerencia', 'sugereme', 'sugiere',
+        'busco', 'buscar', 'buscame', 'quiero', 'necesito', 'dame', 'recomendacion',
+        'opciones', 'alternativas', 'cual me recomiendas', 'que me recomiendas',
+        'muestrame', 'ensename', 'ayudame a elegir', 'ayudame a encontrar',
+        'que fragancia', 'que perfume', 'cual perfume', 'cual fragancia', 'elige por mi'
+    ];
+
+    // Los verbos FUERTES ya son una peticion de recomendacion por si solos.
+    // Los debiles ("dame", "quiero", "busco") necesitan ademas alguna pista
+    // mas, porque "dame el precio" o "quiero saber los horarios" no son
+    // recomendaciones.
+    var PALABRAS_RECOMENDAR_FUERTES = [
+        'recomienda', 'recomiendame', 'recomendame', 'sugereme', 'sugiere',
+        'cual me recomiendas', 'que me recomiendas', 'ayudame a elegir',
+        'ayudame a encontrar', 'buscame', 'muestrame', 'ensename', 'elige por mi',
+        'que fragancia', 'que perfume', 'cual perfume', 'cual fragancia'
+    ];
+
+    // Palabras que, con contexto previo, refinan la busqueda anterior.
+    // OJO: 'para hombre' / 'para mujer' NO van aqui. La primera frase del
+    // usuario ya las contiene ("recomiendame un perfume para hombre") y hacia
+    // que toda recomendacion se tomara como refinamiento. El cambio de genero
+    // se detecta por slot, no por palabra.
+    var PALABRAS_REFINAMIENTO = [
+        'mas barato', 'mas baratos', 'mas barata', 'baratas', 'barato', 'barata',
+        'mas economico', 'mas economicos', 'economico', 'economicos', 'mas barato que ese',
+        'mas caro', 'mas caros', 'mas cara', 'caras', 'caro', 'mas caro que ese',
+        'mas fresco', 'frescos', 'fresco', 'fresa', 'mas dulce', 'dulces', 'dulce',
+        'mas amaderado', 'amaderados', 'amaderado', 'mas suave', 'suaves', 'mas fuerte',
+        'mas intenso', 'mas duradero', 'mas parfumado', 'menos caro', 'mas cortos',
+        'otra vez', 'otro perfume', 'otra opcion', 'algo mas', 'y si', 'mejor', 'pero',
+        'no quiero', 'sin', 'distinta', 'diferente', 'cambia', 'cambiar', 'en vez de',
+        'otra marca', 'demas', 'menos', 'opcion', 'que sea', 'otro'
+    ];
+
+    // Preguntas que se hacen sobre un perfume concreto
+    var PREGUNTAS_SOBRE_PRODUCTO = [
+        'cuanto cuesta', 'cuanto vale', 'cuanto es', 'precio', 'cuanto',
+        'que notas', 'notas de', 'como huele', 'que tal es', 'vale la pena',
+        'es de', 'sirve para', 'es bueno para', 'para que queda', 'cuando usarlo',
+        'dura', 'duracion', 'fijacion', 'proyecta', 'es original', 'es para'
+    ];
+
+    var NOMBRES_OCASION = {
+        oficina: 'la oficina', cita: 'una cita', fiesta: 'la fiesta', calor: 'clima calido',
+        frio: 'invierno', navidad: 'Navidad', sanvalentin: 'San Valentin',
+        halloween: 'Halloween', diamadre: 'el dia de la madre', diapadre: 'el dia del padre',
+        blackfriday: 'Black Friday', amorYamistad: 'el dia del amor y la amistad',
+        gala: 'un evento elegante', gym: 'el gimnasio', diario: 'el dia a dia', regalo: 'regalar'
+    };
+
+    // === VOCABULARIO DE NOTAS DEL CATÁLOGO ===
+    // Permite entender "quiero algo con vainilla y oud": las palabras de la
+    // consulta se cruzan con las notas que realmente tienen los 299 productos.
+    function vocabularioNotas() {
+        var indice = construirIndiceCatalogo();
+        if (indice.vocabNotas) return indice.vocabNotas;
+        var set = {};
+        for (var i = 0; i < indice.todos.length; i++) {
+            var p = indice.todos[i];
+            var txt = (p.notas || '') + ' ' + (p.notas_salida || '') + ' ' +
+                      (p.notas_corazon || '') + ' ' + (p.notas_fondo || '') + ' ' +
+                      (p.tipo_olor || '') + ' ' + (p.transmite || '');
+            var toks = normalize(txt).split(' ');
+            for (var j = 0; j < toks.length; j++) {
+                if (toks[j].length >= 4 && STOP_WORDS.indexOf(toks[j]) === -1) set[toks[j]] = true;
+            }
+        }
+        indice.vocabNotas = set;
+        return set;
+    }
+
+    function detectarNotas(texto) {
+        var vocab = vocabularioNotas();
+        // Estas palabras son occasion o familia, no notas: "oficina" no es
+        // una nota, es un motivo de compra.
+        var NO_NOTAS = ['oficina', 'cita', 'fiesta', 'calor', 'frio', 'navidad', 'sanvalentin',
+                        'halloween', 'diamadre', 'diapadre', 'blackfriday', 'amorYamistad',
+                        'gala', 'gym', 'regalo', 'diario', 'amaderado', 'dulce', 'citrico',
+                        'floral', 'oriental', 'cuero', 'acuatica', 'frutal'];
+        var toks = normalize(texto).split(' ');
+        var out = [];
+        for (var i = 0; i < toks.length; i++) {
+            var t = toks[i];
+            if (t.length >= 4 && vocab[t] && NO_NOTAS.indexOf(t) === -1 && out.indexOf(t) === -1) {
+                out.push(t);
+            }
+        }
+        return out;
+    }
+
+    // "para él" (con tilde) se pierde al normalizar. Se recupera solo si la
+    // frase TERMINA en "para el", que es como se escribe "quiero algo para él".
+    // "para el día de la madre" no termina ahí, así que no se confunde.
+    function detectaParaEl(norm) {
+        return /\bpara\s+el\s*$/.test(norm) ||
+               /\bpara\s+el\s+(hombre|masculino|chico|novio|esposo|papa)\b/.test(norm);
+    }
+
+    // === EXTRACCIÓN DE SLOTS DE UN MENSAJE ===
+    function extraerSlots(text) {
+        var norm = normalize(text);
+        var positivo = enmascararNegaciones(text).texto;
+        var c = {
+            texto: text,
+            norm: norm,
+            positivo: positivo,
+            longitud: norm.length
+        };
+
+        // género SOLO de este mensaje (no acumulado)
+        c.genero = null;
+        if (containsAny(positivo, DICTIONARY.hombre)) c.genero = 'hombre';
+        else if (detectaParaEl(norm)) c.genero = 'hombre';
+        else if (containsAny(positivo, DICTIONARY.mujer)) c.genero = 'mujer';
+        else if (containsAny(positivo, DICTIONARY.unisex)) c.genero = 'unisex';
+
+        // ocasión
+        c.ocasion = null;
+        var occs = ['navidad', 'sanvalentin', 'halloween', 'diamadre', 'diapadre', 'blackfriday',
+                    'amorYamistad', 'cita', 'oficina', 'fiesta', 'calor', 'frio', 'gala', 'gym'];
+        for (var i = 0; i < occs.length; i++) {
+            if (containsAny(positivo, DICTIONARY[occs[i]])) { c.ocasion = occs[i]; break; }
+        }
+        if (!c.ocasion && detectGiftIntent(text)) c.ocasion = 'regalo';
+
+        // familia olfativa
+        c.familia = null;
+        var fams = ['amaderado', 'dulce', 'citrico', 'floral', 'oriental', 'cuero', 'acuatica', 'frutal'];
+        for (var j = 0; j < fams.length; j++) {
+            if (containsAny(positivo, DICTIONARY[fams[j]])) { c.familia = fams[j]; break; }
+        }
+
+        c.presupuesto = extractBudget(text);
+        c.exclusiones = familiasExcluidasDe(text);
+        c.notas = detectarNotas(positivo);
+        c.producto = buscarProductoEnCatalogo(text);
+
+        // Marca mencionada. "recomiendame perfumes de Armaf" no es consultar
+        // un producto: es pedir una recomendacion de esa marca.
+        c.marca = null;
+        var marcas = construirIndiceCatalogo().porMarca;
+        for (var mb in marcas) {
+            if (!marcas.hasOwnProperty(mb)) continue;
+            if (mb.length >= 3 && norm.indexOf(mb) !== -1) { c.marca = mb; break; }
+        }
+
+        c.quiereRecomendacion = containsAny(positivo, PALABRAS_RECOMENDAR);
+        c.quiereRefinar = containsAny(positivo, PALABRAS_REFINAMIENTO);
+        c.preguntaSobreProducto = containsAny(positivo, PREGUNTAS_SOBRE_PRODUCTO);
+
+        c.referencia = null;
+        if (containsAny(positivo, ['el primero', 'el 1', 'primero', 'primer'])) c.referencia = 0;
+        else if (containsAny(positivo, ['el segundo', 'el 2', 'segundo'])) c.referencia = 1;
+        else if (containsAny(positivo, ['el tercero', 'el 3', 'tercero'])) c.referencia = 2;
+
+        c.hayContexto = !!(state.ultimaConsulta ||
+                           (state.lastRecommendedIds && state.lastRecommendedIds.length));
+        return c;
+    }
+
+    // === ROUTER CON PUNTAJE ===
+    // Cada intencion devuelve un puntaje. Gana la de mayor puntaje, siempre que
+    // supere el umbral. Asi "mas barato" (refinamiento) le gana a "recomienda"
+    // (recomendacion) cuando hay resultados previos, y "dame algo para la
+    // oficina" no se come la palabra "dame" de otra intencion.
+    // Preguntas sobre la TIENDA (datos, politicas, garantias). Estas las
+    // responde la cadena legacy con el copy que ya existe, asi que el router
+    // no debeRobarlas: antes "donde queda la tienda" terminaba mostrndole
+    // el perfume "La Belle".
+    var PREGUNTAS_DE_TIENDA = [
+        'donde queda la tienda', 'donde estan', 'donde se encuentra', 'tienda fisica',
+        'ubicacion', 'direccion', 'cual es la diferencia', 'diferencia entre',
+        'edp', 'edt', 'eau de parfum', 'eau de toilette', 'concentracion',
+        'horarios', 'horario', 'abren', 'cierran', 'a que hora',
+        'envio', 'envios', 'enviar', 'domicilio', 'domicilios', 'entrega', 'entregas',
+        'cuantos dias', 'cuanto tarda', 'tiempo de entrega', 'rastrear', 'seguimiento',
+        'como pago', 'formas de pago', 'medios de pago', 'puedo pagar', 'transferencia',
+        'contra entrega', 'tarjeta', 'nequi', 'daviplata', 'efectivo',
+        'garantia', 'originales', 'replicas', 'autentico', 'autenticos', 'sellado',
+        'batch code', 'procedencia', 'replica', 'copia', 'copias',
+        'decant', 'decants', 'muestra', 'muestras', 'tamano', 'tamanos',
+        'reclamar', 'reclamo', 'queja', 'quejas', 'llegó roto', 'llego roto',
+        'llego danado', 'pedido damaged', 'devolucion', 'devoluciones', 'cambio',
+        'descuento por cantidad', 'por cantidad', 'precio especial', 'mayorista',
+        'aplicar', 'fijacion', 'donde aplicar', 'puntos de aplicacion', 'como aplicar',
+        'gracias', 'muchas gracias', 'quien eres', 'como te llamas'
+    ];
+
+    // El flujo de REGALO lo maneja mejor la cadena legacy: deduce el genero
+    // del destinatario, pregunta si no lo sabe y ofrece el empaque. Si el
+    // router lo captura, se pierde ese copy.
+    var PREGUNTAS_DE_REGALO = [
+        'regalo', 'regalar', 'regale', 'obsequio', 'presente', 'sorpresa',
+        'cumpleanos', 'aniversario', 'boda', 'novia', 'novio', 'esposa', 'esposo',
+        'dia de la madre', 'dia del padre', 'dia del amor', 'dia de la amistad',
+        'dia de san valentin', 'san valentin', 'para mi mama', 'para mi papa',
+        'para mi mama', 'para mi papa', 'para miherbano', 'para mi hermana'
+    ];
+
+    function puntuarIntenciones(c) {
+        var lista = [];
+
+        // Si es una pregunta de la tienda (datos, politicas, garantias) el
+        // router se aparta y deja que la cadena legacy conteste.
+        if (containsAny(c.positivo, PREGUNTAS_DE_TIENDA)) return lista;
+
+        // Lo mismo con el flujo de regalo, que la cadena legacy hace mejor.
+        if (containsAny(c.positivo, PREGUNTAS_DE_REGALO)) return lista;
+
+        // --- 1. CONSULTA SOBRE UN PRODUCTO CONCRETO ---
+        if (c.producto && c.producto.confianza >= 0.55) {
+            var s = 20;
+            if (c.preguntaSobreProducto) s += 45;
+            // Para GANAR con un verbo de recomendacion hace falta que haya
+            // aparecido el nombre COMPLETO del producto (confianza 0.85+). Si lo
+            // unico que coincidio fue la marca, es una recomendacion de esa
+            // marca, no un producto.
+            if (c.quiereRecomendacion && c.producto.confianza >= 0.85) s += 30;
+            if (c.referencia !== null) s += 15;
+            if (c.quiereRefinar) s += 10;
+            // Solo se anota la intencion si tiene una base solida: nombrar un
+            // producto suelta (20 puntos) no basta, hace falta una pregunta
+            // sobre el o un verbo de compra.
+            if (s >= 40) lista.push({ id: 'producto', puntaje: s });
+        }
+
+        // --- 2. REFINAMIENTO DE LA BUSQUEDA ANTERIOR ---
+        if (c.hayContexto) {
+            var r = 20;
+            if (c.quiereRefinar) r += 45;
+            if (c.genero) r += 22;
+            if (c.presupuesto) r += 22;
+            if (c.familia) r += 16;
+            if (c.exclusiones.length) r += 16;
+            if (c.ocasion) r += 14;
+            if (c.notas.length) r += 12;
+            if (c.referencia !== null) r += 12;
+            lista.push({ id: 'refinar', puntaje: r });
+        }
+
+        // --- 3. RECOMENDACION ---
+        var m = 0;
+        if (containsAny(c.positivo, PALABRAS_RECOMENDAR_FUERTES)) m += 45;
+        else if (c.quiereRecomendacion) m += 28;
+        if (c.genero) m += 12;
+        if (c.ocasion) m += 12;
+        if (c.familia) m += 10;
+        if (c.presupuesto) m += 10;
+        if (c.notas.length) m += 8;
+        if (c.exclusiones.length) m += 6;
+        if (c.marca) m += 8;
+        if (m >= 20) lista.push({ id: 'recomendar', puntaje: m });
+
+        lista.sort(function (a, b) { return b.puntaje - a.puntaje; });
+        return lista;
+    }
+
+    function elegirIntencion(c) {
+        var lista = puntuarIntenciones(c);
+        if (!lista.length) return null;
+        if (lista[0].puntaje < UMBRAL_ROUTER) return null;
+        return lista[0].id;
+    }
+
+    // === UTILIDADES DE SLOTS ===
+    function unionListas() {
+        var out = [];
+        for (var i = 0; i < arguments.length; i++) {
+            var l = arguments[i];
+            if (!l) continue;
+            for (var j = 0; j < l.length; j++) {
+                if (out.indexOf(l[j]) === -1) out.push(l[j]);
+            }
+        }
+        return out;
+    }
+
+    function componerConsulta(texto, s) {
+        var p = [texto];
+        if (s.familia) p.push(s.familia);
+        if (s.ocasion && s.ocasion !== 'regalo') p.push(s.ocasion);
+        if (s.notas && s.notas.length) p.push(s.notas.join(' '));
+        return p.join(' ');
+    }
+
+    function explicarCriterios(s) {
+        var partes = [];
+        if (s.genero) partes.push(s.genero === 'hombre' ? 'para hombre' : s.genero === 'mujer' ? 'para mujer' : 'unisex');
+        if (s.ocasion) partes.push('para ' + (NOMBRES_OCASION[s.ocasion] || s.ocasion));
+        if (s.familia) partes.push('aroma ' + s.familia);
+        if (s.marca) partes.push('de la marca ' + s.marca);
+        if (s.presupuesto) partes.push('hasta ' + formatoMoneda(s.presupuesto));
+        if (s.exclusiones && s.exclusiones.length) partes.push('sin ' + s.exclusiones.join(' ni '));
+        if (s.notas && s.notas.length) partes.push('notas de ' + s.notas.slice(0, 2).join(', '));
+        // Los 3 mas relevantes: una lista larga de criterios parece un formulario
+        return partes.slice(0, 3);
+    }
+
+    function estadoSlots(c) {
+        // Slots efectivos: lo de este mensaje sobre lo que ya se recuerda
+        var prefs = state.userPreferences;
+        var base = state.ultimaConsulta || {};
+        var s = {
+            genero: c.genero || base.genero || prefs.gender,
+            occasion: c.ocasion || base.ocasion || prefs.occasion,
+            familia: c.familia || base.familia || prefs.scentType,
+            presupuesto: c.presupuesto || base.presupuesto || prefs.budgetMax,
+            exclusiones: unionListas(base.exclusiones, c.exclusiones, prefs.excludedFamilies),
+            // Las notas NO se acumulan: "vainilla" de hace 3 turnos ya no debe
+            // seguir pesando en la busqueda actual.
+            notas: c.notas || [],
+            marca: c.marca || base.marca || null
+        };
+
+        // Una peticion FUERTE ("recomiendame", "ayudame a elegir") empieza una
+        // busqueda nueva: se limpian las pistas blandas (ocasion, familia, notas)
+        // y se conservan las duras (genero, presupuesto, exclusiones, marca).
+        if (containsAny(c.positivo, PALABRAS_RECOMENDAR_FUERTES)) {
+            s.ocasion = c.ocasion || null;
+            s.familia = c.familia || null;
+            s.notas = c.notas || [];
+        }
+        return s;
+    }
+
+    // Para "los mas baratos" / "los mas caros" el ranking por relevancia no
+    // sirve: hay que ORDENAR el catalogo por precio. Si no, el buscador
+    // devuelve los de mayor puntaje, que no son necesariamente los mas baratos.
+    function buscarPorPrecio(s, ascendente) {
+        var catalogo = construirIndiceCatalogo().todos;
+        var filtrados = catalogo.filter(function (p) {
+            if (!p.precio) return false;
+            if (s.genero) {
+                var c = (p.categoria || '').toLowerCase();
+                if (c !== s.genero && c !== 'unisex') return false;
+            }
+            if (s.marca) {
+                if (normalize(p.marca || '') !== s.marca) return false;
+            }
+            if (s.exclusiones && s.exclusiones.length) {
+                var fam = ((p.tipo_olor || '') + ' ' + (p.notas || '')).toLowerCase();
+                for (var i = 0; i < s.exclusiones.length; i++) {
+                    if (fam.indexOf(s.exclusiones[i]) !== -1) return false;
+                }
+            }
+            return true;
+        });
+        filtrados.sort(function (a, b) {
+            return ascendente ? (a.precio - b.precio) : (b.precio - a.precio);
+        });
+        return filtrados.slice(0, 3);
+    }
+
+    function guardarConsulta(s, matches) {
+        state.ultimaConsulta = {
+            // OJO: aqui la clave es 'genero' (como en estadoSlots). El buscador
+            // usa 'gender' (como en searchPerfumes). No son el mismo nombre.
+            genero: s.genero,
+            ocasion: s.ocasion,
+            familia: s.familia,
+            presupuesto: s.presupuesto,
+            exclusiones: s.exclusiones,
+            notas: s.notas,
+            marca: s.marca || null,
+            ids: matches.map(function (m) { return m.id; })
+        };
+    }
+
+    // Filtra por la marca que menciono el usuario ("perfumes de Armaf").
+    // Si la busqueda por relevancia no trae ninguno de esa marca, se buscan
+    // directo en el catalogo: si no, el botdiria "de la marca Armaf" y
+    // mostraria fragancias de otra.
+    function productosDeMarca(marca, s) {
+        if (!marca) return [];
+        var catalogo = construirIndiceCatalogo().todos;
+        return catalogo.filter(function (p) {
+            if (normalize(p.marca || '') !== marca) return false;
+            if (s && s.genero) {
+                var c = (p.categoria || '').toLowerCase();
+                if (c !== s.genero && c !== 'unisex') return false;
+            }
+            if (s && s.exclusiones && s.exclusiones.length) {
+                var fam = ((p.tipo_olor || '') + ' ' + (p.notas || '')).toLowerCase();
+                for (var i = 0; i < s.exclusiones.length; i++) {
+                    if (fam.indexOf(s.exclusiones[i]) !== -1) return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    function filtrarPorMarca(matches, marca) {
+        if (!marca || !matches || !matches.length) return matches;
+        var deLaMarca = matches.filter(function (m) {
+            return normalize(m.marca || '') === marca;
+        });
+        return deLaMarca.length ? deLaMarca : matches;
+    }
+
+    // === RESPUESTA: REFINAMIENTO ===
+    function responderRefinamiento(c) {
+        var base = state.ultimaConsulta || {};
+        var s = estadoSlots(c);
+
+        // Que cambio respecto de la busqueda anterior (para explicarlo)
+        var cambios = [];
+        if (c.genero && c.genero !== base.genero) {
+            cambios.push('ahora para ' + (c.genero === 'hombre' ? 'hombre' : c.genero === 'mujer' ? 'mujer' : 'unisex'));
+        }
+        if (c.presupuesto && c.presupuesto !== base.presupuesto) {
+            cambios.push('hasta ' + formatoMoneda(c.presupuesto));
+        }
+        if (c.familia && c.familia !== base.familia) {
+            cambios.push('aroma ' + c.familia);
+        }
+        if (c.ocasion && c.ocasion !== base.ocasion) {
+            cambios.push('para ' + (NOMBRES_OCASION[c.ocasion] || c.ocasion));
+        }
+        if (c.exclusiones.length) {
+            cambios.push('excluyendo ' + c.exclusiones.join(' y '));
+        }
+        if (c.notas.length) {
+            cambios.push('con notas de ' + c.notas.slice(0, 3).join(', '));
+        }
+        if (!cambios.length && base.ids) {
+            cambios.push('otra tanda de la misma búsqueda');
+        }
+
+        var query = componerConsulta(c.texto, s);
+        var opts = {
+            gender: s.genero,
+            budgetMax: s.presupuesto,
+            excludedFamilies: s.exclusiones,
+            potency: state.userPreferences.potency
+        };
+        var matches = searchPerfumes(query, opts);
+        var relajado = false;
+
+        if (!matches.length || matches.presupuestoInsatisfacible) {
+            // El precio pedido no deja nada: se avisa con el minimo real
+            var rango = rangoPrecios();
+            if (rango && s.presupuesto && s.presupuesto < rango.min) {
+                return {
+                    type: 'text',
+                    content: "💰 Con un tope de **" + formatoMoneda(s.presupuesto) + "** no tenemos ninguna fragancia: lo más barato del catálogo está en **" +
+                             formatoMoneda(rango.min) + "**.\n\n" +
+                             "Trabajamos con precios directos en cada referencia, así que no hay un escalón más barato. Lo que sí puedo hacer:\n\n" +
+                             "• **Buscarte la opción más económica** dentro de tu estilo (" + formatoMoneda(rango.min) + " es el piso)\n" +
+                             "• **Consultar una condición especial** por WhatsApp\n\n" +
+                             "📲 [Consultar precio especial →](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, busco un perfume con un presupuesto de ' + s.presupuesto + '. ¿Tienen alguna condición especial?') + ")"
+                };
+            }
+        }
+        if (!matches.length) {
+            matches = searchPerfumes(query, {
+                gender: s.genero,
+                budgetMax: null,
+                excludedFamilies: s.exclusiones
+            });
+            relajado = true;
+            if (matches.length) cambios.push('relajé el límite de precio');
+        }
+
+        if (!matches.length) {
+            return {
+                type: 'text',
+                content: "🤔 Con esos filtros no me sale ninguna fragancia del catálogo. " +
+                         "¿Prefieres que **quite el precio**, que **quite la exclusión de aromas** o que mire **otro tipo de fragancia**?"
+            };
+        }
+
+        // "más barato" / "más caro" ordenan por precio. Sin esto el buscador
+        // devolvia los de mayor puntaje, que no son necesariamente los más
+        // baratos.
+        var quiereBarato = containsAny(c.positivo, ['mas barato', 'mas baratos', 'barato', 'barata',
+                                                     'baratas', 'mas economico', 'mas economicos',
+                                                     'economico', 'economicos', 'mas barata',
+                                                     'menos caro', 'mas baratas']);
+        var quiereCaro = containsAny(c.positivo, ['mas caro', 'mas caros', 'caro', 'mas cara',
+                                                   'mas caras', 'caros', 'premium', 'exclusivo',
+                                                   'exclusivos', 'lujo', 'mas de lujo']);
+        if (quiereBarato || quiereCaro) {
+            var porPrecio = buscarPorPrecio(s, quiereBarato);
+            if (porPrecio.length) {
+                matches = porPrecio;
+                if (quiereBarato) {
+                    cambios.push('ordenadas de menor a mayor precio');
+                } else {
+                    cambios.push('ordenadas de mayor a menor precio');
+                }
+            }
+        }
+
+        state.lastRecommendedIds = matches.map(function (m) { return m.id; });
+        state.currentFocusProduct = matches[0];
+        guardarConsulta(s, matches);
+
+        var criterios = explicarCriterios(s);
+        var cabecera = "🔧 **Ajusté tu búsqueda:** " + cambios.join(' · ') + ".";
+        if (criterios.length) cabecera += "\n🎯 **Criterios:** " + criterios.join(' · ') + ".";
+
+        // El intro por defecto elige tema segun laoccasion guardada, asi que para
+        // "los mas baratos" decía "Modo Bestia". Aqui va uno acorde a la consulta.
+        var gTxt = s.genero === 'hombre' ? ' (Hombre)' : s.genero === 'mujer' ? ' (Mujer)' : s.genero === 'unisex' ? ' (Unisex)' : '';
+        var cuerpo;
+        if (quiereBarato) {
+            cuerpo = "💸 **Las más económicas" + gTxt + ":** te ordené el catálogo de menor a mayor precio para que veas primero lo que menos pesa en tu bolsillo:";
+        } else if (quiereCaro) {
+            cuerpo = "👑 **Las más exclusivas" + gTxt + ":** te ordené el catálogo de mayor a menor precio, con las piezas de mayor concentración y proyección:";
+        } else {
+            cuerpo = generateRecommendationIntro(c.texto, matches);
+        }
+        if (relajado) {
+            cabecera += "\n⚠️ No encontré nada con TODOS los filtros, así que aflojé el de precio.";
+        }
+
+        return {
+            type: 'recommendation',
+            content: cabecera + "\n\n" + cuerpo,
+            products: matches
+        };
+    }
+
+    // === RESPUESTA: RECOMENDACION ===
+    function responderRecomendacion(c) {
+        var prefs = state.userPreferences;
+        var s = estadoSlots(c);
+
+        // Falta el genero y hay contexto claro de compra: preguntar, SIN perder
+        // lo que el usuario ya dijo (la memoria queda en userPreferences)
+        if (!s.genero && (s.ocasion || s.familia || s.notas.length)) {
+            var contexto = [];
+            if (s.ocasion) contexto.push('para ' + (NOMBRES_OCASION[s.ocasion] || s.ocasion));
+            if (s.familia) contexto.push('aroma ' + s.familia);
+            if (s.notas.length) contexto.push('con notas de ' + s.notas.slice(0, 3).join(', '));
+            return {
+                type: 'text',
+                content: "💫 Perfecto" + (contexto.length ? " (" + contexto.join(', ') + ")" : "") +
+                         ". Para afinar la selección: **¿es para hombre, mujer o unisex?**\n\n" +
+                         "Con eso te muestro las 3 fragancias que mejor encajan y te explico por qué."
+            };
+        }
+
+        var query = componerConsulta(c.texto, s);
+        var opts = {
+            gender: s.genero,
+            budgetMax: s.presupuesto,
+            excludedFamilies: s.exclusiones,
+            potency: prefs.potency
+        };
+        var matches = searchPerfumes(query, opts);
+        matches = filtrarPorMarca(matches, s.marca);
+
+        // Si el usuario pidio una marca y los resultados no son de esa marca,
+        // se buscan ESA marca en el catalogo. Si no, el bot diria "de la marca
+        // Armaf" y mostraria fragancias de otras marcas.
+        if (s.marca) {
+            var deEsaMarca = productosDeMarca(s.marca, s);
+            if (deEsaMarca.length) {
+                matches = deEsaMarca.slice(0, 3);
+            }
+        }
+
+        // El buscador marca cuando NADA cumple el presupuesto (en vez de
+        // ignorarlo en silencio). Si es asi, hay que decirlo: mostrar productos
+        // que cuestan el doble de lo que pidio es mentirle.
+        if (matches.presupuestoInsatisfacible && s.presupuesto) {
+            var rangoImposible = rangoPrecios();
+            if (rangoImposible && s.presupuesto < rangoImposible.min) {
+                return {
+                    type: 'text',
+                    content: "💰 Con un tope de **" + formatoMoneda(s.presupuesto) + "** no hay fragancias disponibles: lo más barato del catálogo está en **" +
+                             formatoMoneda(rangoImposible.min) + "**.\n\n" +
+                             "Trabajamos con precios directos en cada referencia, así que no hay un escalón más barato. Lo que sí puedo hacer:\n\n" +
+                             "• **Buscarte la opción más económica** dentro de tu estilo\n" +
+                             "• **Consultar una condición especial** por WhatsApp\n\n" +
+                             "📲 [Consultar precio especial →](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, busco un perfume con un presupuesto de ' + s.presupuesto + '. ¿Tienen alguna condición especial?') + ")"
+                };
+            }
+        }
+
+        if (!matches.length && s.presupuesto) {
+            var rango = rangoPrecios();
+            if (rango && s.presupuesto < rango.min) {
+                return {
+                    type: 'text',
+                    content: "💰 Con un tope de **" + formatoMoneda(s.presupuesto) + "** no hay fragancias disponibles: lo más barato del catálogo está en **" +
+                             formatoMoneda(rango.min) + "**.\n\n" +
+                             "Trabajamos con precios directos en cada referencia, así que no hay un escalón más barato. Lo que sí puedo hacer:\n\n" +
+                             "• **Buscarte la opción más económica** dentro de tu estilo\n" +
+                             "• **Consultar una condición especial** por WhatsApp\n\n" +
+                             "📲 [Consultar precio especial →](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, busco un perfume con un presupuesto de ' + s.presupuesto + '. ¿Tienen alguna condición especial?') + ")"
+                };
+            }
+        }
+        if (!matches.length) {
+            matches = searchPerfumes(query, { gender: s.genero, budgetMax: null, excludedFamilies: s.exclusiones });
+            if (matches.length) {
+                var cab0 = "⚠️ No encontré nada con **todos** tus filtros, así que aflojé el de precio.";
+                state.lastRecommendedIds = matches.map(function (m) { return m.id; });
+                state.currentFocusProduct = matches[0];
+                guardarConsulta(s, matches);
+                return {
+                    type: 'recommendation',
+                    content: cab0 + "\n\n" + generateRecommendationIntro(c.texto, matches),
+                    products: matches
+                };
+            }
+            return {
+                type: 'text',
+                content: "🤔 No me sale ninguna fragancia con esa combinación. ¿Quieres que **quite el precio**, que **quite la exclusión de aromas** o que revise **otra familia olfativa**?"
+            };
+        }
+
+        state.lastRecommendedIds = matches.map(function (m) { return m.id; });
+        state.currentFocusProduct = matches[0];
+        guardarConsulta(s, matches);
+
+        var criterios = explicarCriterios(s);
+        var cabecera = criterios.length ? "🎯 **Criterios:** " + criterios.join(' · ') + ".\n\n" : "";
+        return {
+            type: 'recommendation',
+            content: cabecera + generateRecommendationIntro(c.texto, matches),
+            products: matches
+        };
+    }
+
+    // === RESPUESTA: CONSULTA SOBRE UN PRODUCTO ===
+    function responderConsultaProducto(c) {
+        var producto = c.producto.product;
+        // Si el usuario pide explicitamente ese perfume ("quiero el 9pm"),
+        // se le muestra la ficha y no solo la descripcion.
+        var soloInfo = c.preguntaSobreProducto && !c.quiereRecomendacion;
+        if (soloInfo) {
+            state.currentFocusProduct = producto;
+            return generatePerfumeDeepDive(producto, c.texto);
+        }
+        state.currentFocusProduct = producto;
+        state.lastRecommendedIds = [producto.id];
+        guardarConsulta(estadoSlots(c), [producto]);
+        return {
+            type: 'recommendation',
+            content: "✨ Aquí tienes lo que buscas:\n\n" + generatePerfumeDeepDive(producto, c.texto).content,
+            products: [producto]
+        };
+    }
+
     function processUserMessage(rawText) {
         var text = rawText.trim();
         var norm = normalize(text);
 
         if (!text) return null;
 
-        // 1. GUARDRAIL: Detección estricta de temas fuera de dominio
-        if (containsAny(text, OUT_OF_DOMAIN)) {
+        // 0. ACTUALIZAR PREFERENCIAS ANTES DE EVALUAR CUALQUIER INTENCIÓN.
+        // Antes esto pasaba en el paso 8, muy por debajo de los handlers que leen
+        // state.userPreferences (los más vendidos, los nuevos, etc.), así que
+        // respondían con el género y la ocasión del mensaje ANTERIOR.
+        var textoConTyos = applyTypoCorrection(text);
+        updateUserPreferencesFromMessage(textoConTyos !== text ? textoConTyos + ' ' + text : text);
+
+        // 1. GUARDRAIL: fuera de dominio.
+        // Solo se rechaza si la consulta NO tiene ninguna señal de perfumería. Antes
+        // se evaluaba siempre primero y con palabras que la propia tienda usa
+        // ('clima', 'trabajo', 'tiempo', 'amor'), de modo que 3 de los 5 chips
+        // rápidos del chat respondían "No puedo ayudarte con ese tema".
+        if (containsAny(text, OUT_OF_DOMAIN) && !esConsultaDePerfumeria(text)) {
             return {
                 type: 'text',
                 content: "Mi especialidad y pasión es la alta perfumería. No puedo ayudarte con ese tema, pero con el mayor de los gustos puedo asesorarte para encontrar tu fragancia ideal, explicarte notas exclusivas o gestionar tu pedido por WhatsApp. ✨"
             };
+        }
+
+
+
+    // === ROUTER CON PUNTAJE ===
+        // Se extraen los slots de la frase y se puntuan las intenciones. Solo entra
+        // si alguna gana con confianza; si no, sigue la cadena legacy de abajo.
+        var slots = extraerSlots(text);
+        var intencion = elegirIntencion(slots);
+        if (intencion === 'producto') {
+            var rProd = responderConsultaProducto(slots);
+            if (rProd) return rProd;
+        } else if (intencion === 'refinar') {
+            var rRef = responderRefinamiento(slots);
+            if (rRef) return rRef;
+        } else if (intencion === 'recomendar') {
+            var rRec = responderRecomendacion(slots);
+            if (rRec) return rRec;
         }
 
         // 1-EARLY. DESCUENTOS Y OFERTAS — se evalúa MUY TEMPRANO para que preguntas como
@@ -997,7 +2179,10 @@ var AuraIA = (function() {
         }
 
         // 1i. MÁS VENDIDOS / TOP DEL CATÁLOGO
-        if (containsAny(text, DICTIONARY.masvendidos)) {
+        // Solo si la consulta es GENÉRICA. Si el usuario dio una pista concreta
+        // (ocasión, familia, género, presupuesto, un producto) esta consulta la
+        // debe atender el motor de búsqueda de más abajo, no el catálogo fijo.
+        if (containsAny(text, DICTIONARY.masvendidos) && !consultaTieneEspecificidad(text)) {
             var genderTop = state.userPreferences.gender;
             var topCatalog = getCatalog().filter(function(p) { return p.activo !== false; });
             // Productos marcados como destacados primero, luego por ID
@@ -1277,9 +2462,9 @@ var AuraIA = (function() {
             };
         }
 
-        // 8. ACTUALIZACIÓN ACUMULATIVA DE PREFERENCIAS
-        // Aplicar corrección de typos también al texto para extracción de preferencias
-        updateUserPreferencesFromMessage(correctedText !== text ? correctedText + ' ' + text : text);
+        // 8. Las preferencias ya se actualizaron en el paso 0, antes de evaluar
+        // cualquier intención (si no, los handlers de arriba leían las del turno
+        // anterior).
 
         // 8b. INTENCIÓN DE REGALO — derivar género automáticamente si se detecta destinatario
         if (detectGiftIntent(text)) {
@@ -1744,6 +2929,13 @@ var AuraIA = (function() {
                 return p;
             }
         }
+
+        // 3. Respaldo por token y por typos: permite "¿cuánto el 9pm?" o
+        //    "quiero el fajhar" cuando el texto no trae el nombre completo.
+        var aprox = buscarProductoEnCatalogo(text);
+        if (aprox && aprox.confianza >= 0.5) {
+            return aprox.product;
+        }
         return null;
     }
 
@@ -1893,10 +3085,15 @@ var AuraIA = (function() {
         var waMessage = encodeURIComponent("¡Hola Perfumería Manizales! El Sommelier AI me recomendó *" + p.nombre + "* (" + (p.marca || '') + ") y deseo más información para comprarlo.");
         var waUrl = "https://wa.me/573147551411?text=" + waMessage;
 
+        var auraImg = (typeof window.imagenesProducto === 'function') ? window.imagenesProducto(p) : null;
+        var auraThumb = auraImg
+            ? '<img src="' + auraImg.original + '" srcset="' + auraImg.srcset + '" sizes="80px" alt="' + p.nombre + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">'
+            : '<img src="' + p.imagen + '" alt="' + p.nombre + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">';
+
         return (
             '<div class="aura-product-card" data-product-id="' + p.id + '">' +
                 '<div class="aura-card__thumb">' +
-                    '<img src="' + p.imagen + '" alt="' + p.nombre + '" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
+                    auraThumb +
                     '<div class="aura-card__fallback" style="display:none;">' + (p.emoji || '✦') + '</div>' +
                     discountTag +
                 '</div>' +
@@ -1923,21 +3120,64 @@ var AuraIA = (function() {
         );
     }
 
+    // Escapa HTML antes de aplicar markdown. El texto llega a innerHTML sin
+    // ninguna Conversion previa, asi que un "**...<img onerror=...>**" en un
+    // nombre de producto ejecutaba script en el navegador del cliente.
+    function escaparHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function formatMarkdown(text) {
         if (!text) return '';
-        var html = text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/~(.*?)~/g, '<del>$1</del>')
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="aura-link">$1</a>')
+        var html = escaparHtml(text)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>')
+            .replace(/~([^~\n]+?)~/g, '<del>$1</del>')
+            // Solo enlaces http/https, para que no se pueda inyectar javascript:
+            .replace(/\[([^\]]+)\]\(((?:https?:\/\/)[^)\s]+)\)/g,
+                     '<a href="$2" target="_blank" rel="noopener" class="aura-link">$1</a>')
             .replace(/\n\n/g, '<br><br>')
             .replace(/\n/g, '<br>');
         return html;
     }
 
     // === MANEJO DEL DOM Y EVENTOS DEL CHAT ===
+    // === TECLADO EN MOVIL ===
+    // En iOS el viewport de layout NO se encoge al abrir el teclado, asi que el
+    // panel (88dvh) queda por encima del teclado y el usuario escribe en un campo
+    // que no ve. visualViewport si informa del area realmente visible, y la
+    // diferencia se publica como --kb-inset (lo consume .aura-window en CSS).
+    function syncKeyboardInset() {
+        var vv = window.visualViewport;
+        if (!vv) return;
+        var oculto = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        // Umbral de 80px: en escritorio visualViewport puede diferir un poco de
+        // innerHeight por el chrome del navegador, y sin este filtro el panel
+        // ganaba un relleno inferior fantasma.
+        if (oculto < 80) oculto = 0;
+        document.documentElement.style.setProperty('--kb-inset', oculto + 'px');
+        var win = document.getElementById('aura-chat-window');
+        if (win && win.classList.contains('aura-window--open')) {
+            setTimeout(scrollToBottom, 60);
+        }
+    }
+
+    function initKeyboardInset() {
+        var vv = window.visualViewport;
+        if (!vv) return;
+        vv.addEventListener('resize', syncKeyboardInset);
+        vv.addEventListener('scroll', syncKeyboardInset);
+    }
+
     function initUI() {
         if (document.getElementById('aura-chat-launcher')) return;
+        initKeyboardInset();
 
         // 1. Inyectar botón lanzador y contenedor de chat
         var container = document.createElement('div');
@@ -2036,7 +3276,8 @@ var AuraIA = (function() {
                 launcher.classList.add('aura-launcher--active');
                 document.body.classList.add('aura-chat-active');
                 if (window.innerWidth <= 600) {
-                    document.body.style.overflow = 'hidden';
+                    if (window.ManizalesScrollLock) window.ManizalesScrollLock.lock();
+                    else document.body.style.overflow = 'hidden';
                 }
                 if (headerEl) headerEl.classList.add('header--hidden');
                 state.unreadCount = 0;
@@ -2062,8 +3303,15 @@ var AuraIA = (function() {
                 win.setAttribute('aria-hidden', 'true');
                 launcher.classList.remove('aura-launcher--active');
                 document.body.classList.remove('aura-chat-active');
-                document.body.style.overflow = '';
-                if (headerEl && window.pageYOffset < 150) {
+                if (window.innerWidth <= 600) {
+                    if (window.ManizalesScrollLock) window.ManizalesScrollLock.unlock();
+                    else document.body.style.overflow = '';
+                }
+                // Sin este condicional el header podia quedar oculto para siempre
+                // tras cerrar el chat: se ocultaba al abrir y solo se restauraba
+                // si la pagina estaba cerca del tope, y el scroll de main.js exige
+                // ademas un delta hacia arriba para mostrarlo.
+                if (headerEl) {
                     headerEl.classList.remove('header--hidden');
                 }
 
@@ -2168,25 +3416,30 @@ var AuraIA = (function() {
         var responseDelay = Math.min(850, Math.max(450, text.length * 15));
 
         setTimeout(function() {
-            // 1. Respuesta base del motor de keywords (siempre funciona)
-            var reply = processUserMessage(text);
-
-            // 2. Si el engine de IA está listo, mejorar la respuesta con ML
-            if (reply && typeof AuraAIEngine !== 'undefined' && AuraAIEngine.isReady()) {
-                AuraAIEngine.enhance(text, reply, state).then(function(enhanced) {
-                    hideTypingIndicator();
-                    if (enhanced) {
-                        pushMessage('aura', enhanced);
-                    }
-                }).catch(function() {
-                    hideTypingIndicator();
-                    pushMessage('aura', reply);
-                });
-            } else {
+            // processUserMessage() es una función larga con decenas de ramas y
+            // cualquier excepción escapaba del setTimeout: el indicador de
+            // escritura se quedaba pegado para siempre y el chat no respondía más.
+            var reply;
+            try {
+                reply = processUserMessage(text);
+            } catch (err) {
+                console.error('[AuraIA] error procesando el mensaje:', err);
                 hideTypingIndicator();
-                if (reply) {
-                    pushMessage('aura', reply);
-                }
+                pushMessage('aura', {
+                    type: 'text',
+                    content: "😅 Disculpa, tuve un problema procesando tu pregunta. ¿Podrías reformularla o escribirme por WhatsApp al **+57 314 7551411**? Te atendemos de inmediato."
+                });
+                return;
+            }
+
+            hideTypingIndicator();
+            if (reply) {
+                pushMessage('aura', reply);
+            } else {
+                pushMessage('aura', {
+                    type: 'text',
+                    content: "¿Podrías darme un poco más de contexto? Por ejemplo: **¿para hombre, mujer o unisex?**, **¿para qué ocasión** (oficina, cita, fiesta, día a día) y **qué tipo de aroma** prefieres (fresco, dulce, amaderado, oriental)."
+                });
             }
         }, responseDelay);
     }
@@ -2238,6 +3491,7 @@ var AuraIA = (function() {
                 userPreferences: state.userPreferences,
                 currentFocusProductId: state.currentFocusProduct ? state.currentFocusProduct.id : null,
                 lastRecommendedIds: state.lastRecommendedIds,
+                ultimaConsulta: state.ultimaConsulta,
                 savedAt: Date.now()
             };
             // localStorage para persistir entre sesiones (no solo en la pestaña)
@@ -2261,6 +3515,7 @@ var AuraIA = (function() {
                 state.userPreferences.potency = state.userPreferences.potency || null;
             }
             if (data.lastRecommendedIds) state.lastRecommendedIds = data.lastRecommendedIds;
+            if (data.ultimaConsulta) state.ultimaConsulta = data.ultimaConsulta;
             if (data.currentFocusProductId) {
                 var _cat = getCatalog();
                 var _found = null;
@@ -2320,6 +3575,34 @@ var AuraIA = (function() {
         handleSubmit: handleSubmit,
         enviarMensajeRapido: enviarMensajeRapido,
         verDetalles: verDetalles,
-        limpiarChat: limpiarChat
+        limpiarChat: limpiarChat,
+        // Expuestos para pruebas automatizadas y depuracion en consola
+        _internals: {
+            normalize: normalize,
+            enmascararNegaciones: enmascararNegaciones,
+            familiasExcluidasDe: familiasExcluidasDe,
+            esConsultaDePerfumeria: esConsultaDePerfumeria,
+            buscarProductoEnCatalogo: buscarProductoEnCatalogo,
+            construirIndiceCatalogo: construirIndiceCatalogo,
+            invalidarIndiceCatalogo: invalidarIndiceCatalogo,
+            distanciaCercana: distanciaCercana,
+            rangoPrecios: rangoPrecios,
+            variarResultados: variarResultados,
+            searchPerfumes: searchPerfumes,
+            extractBudget: extractBudget,
+            formatMarkdown: formatMarkdown,
+            state: state,
+            // Motor de diálogo
+            extraerSlots: extraerSlots,
+            puntuarIntenciones: puntuarIntenciones,
+            elegirIntencion: elegirIntencion,
+            responderRecomendacion: responderRecomendacion,
+            responderRefinamiento: responderRefinamiento,
+            responderConsultaProducto: responderConsultaProducto,
+            explicarCriterios: explicarCriterios,
+            componerConsulta: componerConsulta,
+            detectarNotas: detectarNotas,
+            processUserMessage: processUserMessage
+        }
     };
 })();
