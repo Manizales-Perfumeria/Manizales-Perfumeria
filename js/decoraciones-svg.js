@@ -849,8 +849,10 @@ var DecoracionesSVG = (function() {
                 '<g transform="translate(-1088,244) scale(1.2)">' +
                 '<g class="xm-tree">' + XM_TREE_MOVIL + '</g>' +
                 '</g>' +
-                // casitas a la izquierda
-                '<g transform="translate(-39,654) scale(0.62)">' +
+                // casitas a la izquierda. Bajaron 61 unidades de escena: los
+                // tejados cruzaban el texto del boton "COLECCION MUJER" (el
+                // boton va de y=459 a y=508 y las casitas arrancaban en 479).
+                '<g transform="translate(-39,715) scale(0.62)">' +
                 '<g class="xm-houses" opacity="0.95">' + XM_HOUSES + '</g>' +
                 '</g>' +
                 // regalos a la derecha

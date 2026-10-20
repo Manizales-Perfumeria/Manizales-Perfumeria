@@ -596,7 +596,10 @@ body.novedades-open .whatsapp-float {
 .hero {
     position: relative;
     min-height: 100vh;
-    min-height: 100dvh;
+    /* 'lvh' (viewport grande) y no 'dvh': la unidad dinamica cambia cuando la
+       barra de la URL del celular se esconde al scrollear, y eso estiraba la
+       seccion y empujaba el contenido de abajo. 'lvh' es constante. */
+    min-height: 100lvh;
     display: flex;
     align-items: center;
     /* overflow:hidden removido - causaba clipping del hero__bg */
@@ -2538,7 +2541,10 @@ body.modal-open .whatsapp-float {
 .views-main {
     position: relative;
     min-height: 100vh;
-    min-height: 100dvh;
+    /* 'lvh' (viewport grande) y no 'dvh': la unidad dinamica cambia cuando la
+       barra de la URL del celular se esconde al scrollear, y eso estiraba la
+       seccion y empujaba el contenido de abajo. 'lvh' es constante. */
+    min-height: 100lvh;
     overflow: hidden;
 }
 
@@ -2551,7 +2557,10 @@ body.modal-open .whatsapp-float {
 .view {
     display: none;
     min-height: 100vh;
-    min-height: 100dvh;
+    /* 'lvh' (viewport grande) y no 'dvh': la unidad dinamica cambia cuando la
+       barra de la URL del celular se esconde al scrollear, y eso estiraba la
+       seccion y empujaba el contenido de abajo. 'lvh' es constante. */
+    min-height: 100lvh;
     padding-top: calc(72px + env(safe-area-inset-top)); /* header height + zona segura */
 }
 

@@ -814,18 +814,21 @@ body[data-event] .location__visual {
     /* En el celular el hero mide casi dos pantallas, asi que las decoraciones
        de abajo (calabaza y segunda telaraña) quedaban por debajo del pliegue
        y no se veian nunca. Se anclan a la altura de la pantalla para que caigan
-       en la franja visible, entre los botones y la tarjeta. */
+       en la franja visible, entre los botones y la tarjeta.
+
+       OJO: se usa 'vh' y NO 'dvh'. La unidad dinamica ('dvh') cambia de valor
+       cuando la barra de la URL del celular se esconde al hacer scroll, y eso
+       movia las decoraciones de sitio de golpe. 'vh' es el viewport grande y
+       es constante durante todo el scroll. */
     .hero-deco--pumpkin {
         width: 132px;
-        top: 55vh;
-        top: 55dvh;
+        top: 58vh;
         bottom: auto;
         right: -6px;
     }
     .hero-deco--web-2 {
         width: 100px;
         top: 24vh;
-        top: 24dvh;
         bottom: auto;
         left: -5px;
     }
