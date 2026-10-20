@@ -1,5 +1,44 @@
 # Manizales Perfumería - Guía de Instalación
 
+## 🗓️ Publicación en GitHub Pages
+
+El sitio se publica en:
+
+```
+https://manizales-perfumeria.github.io/Manizales-Perfumeria/
+```
+
+La URL lleva la subcarpeta porque la cuenta `Manizales-Perfumeria` es de tipo
+**usuario**: GitHub Pages solo sirve en la raíz (`manizales-perfumeria.github.io/`)
+un repositorio llamado exactamente `Manizales-Perfumeria.github.io`. Con este
+repo, el sitio queda en la subcarpeta `/Manizales-Perfumeria/`.
+
+Para publicar: `git add -A && git commit -m "..." && git push origin main`.
+GitHub Pages recompila solo; tarda entre 1 y 3 minutos.
+
+### Aviso de novedades
+
+`js/novedades.js` muestra en el menú un aviso con los cambios de la última
+actualización, con un distintivo **NUEVO** durante los primeros días desde
+`CONFIG.fechaLanzamiento`. Para cambiar la ventana:
+
+```js
+// js/novedades.js
+fechaLanzamiento: '2026-10-20',   // día en que se publica
+diasVisibles: 32,                  // cuántos días dura el distintivo
+activo: true                       // false = quita la opción del menú
+```
+
+### Notas de la actualización del 20 de octubre de 2026
+
+- `js/aura-ai-engine.js` se eliminó. Nunca se llamaba a su `init()`, así que
+  jamás ejecutó nada, y el modelo que descargaba (BART-large-MNLI) pesa unos
+  400 MB, no los 50 MB que decía su propio comentario. Además no entiende
+  español. El asistente ahora funciona con un motor propio, sin descargas.
+- `data/productos.json.js` se genera minificado con `data/rebuild_js.py`.
+- `img/thumbs/` contiene las miniaturas WebP de 600 px que usan las tarjetas.
+  Se regeneran con `python data/generar_thumbs.py`.
+
 ## 📁 Estructura del Proyecto
 
 ```

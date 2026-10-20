@@ -555,13 +555,10 @@
     <script src="js/emojis-flotantes.js?v=20261019_8"></script>
     <script src="js/eventos.js?v=20261019_8"></script>
     <script src="js/main.js?v=20261019_8"></script>
-    <!-- Novedades: el distintivo NUEVO solo se muestra 15 dias desde el
-         lanzamiento. La fecha esta en js/novedades.js (CONFIG.fechaLanzamiento). -->
+    <!-- Novedades: el distintivo NUEVO se muestra 32 dias desde el lanzamiento.
+         La fecha esta en js/novedades.js (CONFIG.fechaLanzamiento). -->
     <script src="js/novedades.js?v=20261019_8"></script>
     <!-- Asistente IA: se carga diferido para no bloquear el render inicial en móvil -->
     <script src="js/asistente-ia.js?v=20261019_8" defer></script>
-    <!-- js/aura-ai-engine.js se eliminó: nunca se llamaba a su init(), así que
-         nunca ejecutó nada. Ademas BART-large-MNLI son ~400 MB de descarga
-         (el comentario del archivo decia 50 MB) y no entiende español. -->
 </body>
 </html>
