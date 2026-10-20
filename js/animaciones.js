@@ -154,7 +154,11 @@ var Animaciones = (function() {
     Nieve.prototype.crearCopo = function() {
         return {
             x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height - canvas.height,
+            // Antes nacian UNA PANTALLA ARRIBA (y entre -alto y 0) y bajaban
+            // despacio: en el celular, a 30 FPS, tardaban entre 1,5 y 6,6
+            // segundos en aparecer. Por eso no se veia ni un copo al abrir la
+            // pagina. Ahora nacen repartidos por toda la pantalla.
+            y: Math.random() * canvas.height,
             radio: 2 + Math.random() * 5,
             velY: 0.15 + Math.random() * 0.5,
             velX: Math.random() * 0.3 - 0.15,
@@ -262,15 +266,29 @@ var Animaciones = (function() {
         } else {
             startX = -50 - Math.random() * 100;
         }
+
+        // Vuelan por el cielo, pero en dos franjas: una por encima del titulo
+        // y otra entre el titulo y los botones. Asi se ven siempre y no tapan
+        // el texto. Antes bajaban hasta el 92% de la altura, que en el celular
+        // es justo donde va la tarjeta de producto (opaca): el murcielago
+        // existia pero no se veia nunca.
+        var alta = randomY;
+        var zonaMin, zonaMax;
+        if (alta) {
+            if (Math.random() < 0.5) {
+                zonaMin = 0.05; zonaMax = 0.21;
+            } else {
+                zonaMin = 0.33; zonaMax = 0.44;
+            }
+        } else {
+            zonaMin = 0.05; zonaMax = 0.44;
+        }
+
         return {
             x: startX,
-            // Vuelan por la franja de arriba, que es el cielo. Antes bajaban
-            // hasta el 92% de la altura y en el celular esa zona queda detrás
-            // de la tarjeta de producto (que es opaca): el murciélago existía
-            // pero no se veía nunca.
-            y: randomY
-                ? canvas.height * (0.06 + Math.random() * 0.32)
-                : Math.random() * canvas.height * 0.5,
+            y: canvas.height * (zonaMin + Math.random() * (zonaMax - zonaMin)),
+            zonaMin: zonaMin,
+            zonaMax: zonaMax,
             tamano: tamano,
             velX: 2 + Math.random() * 2.5,
             velY: 0,
@@ -366,10 +384,13 @@ var Animaciones = (function() {
                 m.zigDuracion = 35 + Math.random() * 45;
             }
             m.y += (m.dirY || 1) * (1 + Math.abs(Math.sin(m.oscilacion)) * 1.1);
-            // Se mantienen en la franja del cielo (arriba). Si bajan más, en el
-            // celular quedan tapados por la tarjeta de producto.
-            if (m.y < canvas.height * 0.05) m.dirY = 1;
-            if (m.y > canvas.height * 0.42) m.dirY = -1;
+            // Se mantienen dentro de su franja del cielo (la que les toco al
+            // nacer). Si bajan mas, en el celular quedan tapados por la
+            // tarjeta de producto.
+            var zMin = m.zonaMin !== undefined ? m.zonaMin : 0.05;
+            var zMax = m.zonaMax !== undefined ? m.zonaMax : 0.42;
+            if (m.y < canvas.height * zMin) m.dirY = 1;
+            if (m.y > canvas.height * zMax) m.dirY = -1;
 
             if (m.x > canvas.width + 60) {
                 var nuevo = this.crearMurcielago(false);

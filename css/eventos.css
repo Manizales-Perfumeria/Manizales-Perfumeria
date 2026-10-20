@@ -37,6 +37,14 @@ body[data-event] .hero__scene {
 .hero--offscreen .hero-deco {
     animation-play-state: paused !important;
 }
+/* Las estrellas parpadean. El keyframe existia pero nunca se aplico, asi que
+   las estrellas se quedaban quietas. Se animan con will-change para que el
+   navegador les de su propia capa y no tenga que rasterizar el SVG entero
+   en cada frame (el SVG mide 760x1900). */
+.hero__scene .scene-stars circle {
+    animation: sceneTwinkle 3.6s ease-in-out infinite;
+    will-change: opacity;
+}
 .hero__scene .scene-stars circle:nth-child(3n)  { animation-delay: 0.6s; }
 .hero__scene .scene-stars circle:nth-child(3n+1){ animation-delay: 1.2s; }
 .hero__scene .scene-stars circle:nth-child(3n+2){ animation-delay: 1.8s; }
@@ -398,8 +406,7 @@ body[data-event] .location__visual {
     height: 36px;
     pointer-events: none;
     z-index: 50;
-}
-.christmas-garland-svg {
+}.christmas-garland-svg {
     width: 100%;
     height: 100%;
 }
@@ -804,7 +811,24 @@ body[data-event] .location__visual {
     .test-panel__btn { padding: 6px 10px; font-size: 11px; }
     .hero-deco--web { width: 140px; }
     .hero-deco--web-tr { width: 200px; top: -15px; right: -15px; }
-    .hero-deco--pumpkin { width: 100px; }
+    /* En el celular el hero mide casi dos pantallas, asi que las decoraciones
+       de abajo (calabaza y segunda telaraña) quedaban por debajo del pliegue
+       y no se veian nunca. Se anclan a la altura de la pantalla para que caigan
+       en la zona del cielo, junto a la mansion. */
+    .hero-deco--pumpkin {
+        width: 108px;
+        top: 30vh;
+        top: 30dvh;
+        bottom: auto;
+        right: 2%;
+    }
+    .hero-deco--web-2 {
+        width: 100px;
+        top: 22vh;
+        top: 22dvh;
+        bottom: auto;
+        left: -5px;
+    }
     .hero-deco--amistad { width: 75px; }
     .hero-deco--rose { width: 65px; }
     .hero-deco--floral { width: 75px; }
@@ -812,9 +836,23 @@ body[data-event] .location__visual {
     .hero-deco--corona { width: 95px; }
     .hero-deco--patron { width: 95px; }
     .hero-deco--sunrays { width: 80px; height: 80px; }
-    .hero-deco--web-2 { width: 100px; }
     .hero-deco--spider-hang { width: 42px; height: 120px; left: 8%; }
     .hero-deco--bells { width: 60px; }
+
+    /* Guirnalda de navidad: en el celular ocupaba los primeros 36 px y se
+       montaba encima del logo. Ahora es una franja mas fina y el logo baja
+       un poco para que las luces y el logo no se pisen. */
+    .christmas-lights-premium {
+        height: 20px;
+    }
+    .christmas-garland-svg {
+        transform: scaleY(0.6);
+        transform-origin: top center;
+    }
+    .nav__logo,
+    .nav__actions {
+        margin-top: 8px;
+    }
 }
 
 @media (max-width: 480px) {

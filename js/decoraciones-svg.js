@@ -216,8 +216,12 @@ var DecoracionesSVG = (function() {
         '<!-- Ala derecha -->' +
         '<rect x="190" y="155" width="95" height="170" fill="#0a0614"/>' +
         '<path d="M180 155 L237 100 L295 155Z" fill="#06030c"/>' +
-        '<rect x="252" y="65" width="20" height="60" fill="#180e28"/>' +
-        '<rect x="248" y="60" width="28" height="8" fill="#2a1840"/>' +
+        // La chimenea sale de la pendiente derecha del ala. Antes iba pegada al
+        // pico del tejado central y, con ese tono, se recortaba contra el cielo
+        // como un bloque suelto al lado de la mansion. Ahora es mas fina, se
+        // asienta en la pendiente y tiene un remate mas ancho.
+        '<rect x="246" y="74" width="15" height="54" fill="#2e1d47"/>' +
+        '<rect x="242" y="68" width="23" height="8" fill="#3d2860"/>' +
         '<!-- Puerta principal -->' +
         '<path d="M130 325 L130 255 Q155 235 180 255 L180 325Z" fill="#040208"/>' +
         '<ellipse cx="155" cy="250" rx="14" ry="10" fill="#f59e0b" opacity="0.6" class="hw-window-amber"/>' +
@@ -777,8 +781,10 @@ var DecoracionesSVG = (function() {
                 // arboles muertos flanqueando
                 '<g transform="translate(-125,782) scale(0.75)">' + HW_DEADTREE + '</g>' +
                 '<g transform="translate(495,782) scale(0.75)">' + HW_DEADTREE + '</g>' +
-                // mansion centrada (base a y=1150, punta a y=570)
-                '<g transform="translate(159,635) scale(1.45)">' +
+                // mansion centrada. A escala 0.9 cabe entera entre la descripcion y
+                // la tarjeta, con el tejado y la chimenea a la vista, sin tapar
+                // ni el titulo ni los botones.
+                '<g transform="translate(243,757) scale(0.9)">' +
                 '<g class="hw-mansion" opacity="0.97">' + HW_MANSION + '</g>' +
                 '</g>' +
                 // suelo del frente
@@ -825,7 +831,7 @@ var DecoracionesSVG = (function() {
                 // resplandor del arbol
                 '<ellipse cx="380" cy="880" rx="300" ry="300" fill="url(#xm-tree-ambient)"/>' +
                 // arbol centrado (base a y=1150)
-                '<g transform="translate(-1929,-137) scale(1.55)">' +
+                '<g transform="translate(-1088,244) scale(1.2)">' +
                 '<g class="xm-tree">' + XM_TREE + '</g>' +
                 '</g>' +
                 // casitas a la izquierda
@@ -881,7 +887,7 @@ var DecoracionesSVG = (function() {
                 '<circle cx="650" cy="260" r="200" fill="url(#sv-orb-pink)"/>' +
                 estrellasMovil(ESTRELLAS_MOVIL, '#ffd7e8') +
 // corazon grande centrado en la banda alta (para no tapar el titulo)
-                '<g transform="translate(5,90) scale(1.5)">' +
+                '<g transform="translate(425,196) scale(1.1)">' +
                 '<circle cx="250" cy="140" r="170" fill="url(#sv-heart-glow)"/>' +
                 SV_HEART +
                 '</g>' +
@@ -955,7 +961,7 @@ var cuerpo =
                 '<circle cx="660" cy="300" r="200" fill="url(#dm-orb-pink)"/>' +
 // flor grande arriba a la derecha (la de PC esta en x=250, aqui se lleva a la
                 // esquina para no quedar detras del titulo centrado)
-                '<g transform="translate(600,250) scale(1.6)">' +
+                '<g transform="translate(628,214) scale(1.15)">' +
                 '<circle cx="0" cy="0" r="52" fill="url(#dm-bloom-glow)" class="flower-bloom-aura"/>' +
                 '<g fill="#FFB7C5" opacity="0.85">' +
                 '<ellipse cx="0" cy="-42" rx="22" ry="30"/><ellipse cx="0" cy="42" rx="22" ry="30"/>' +

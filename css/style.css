@@ -577,6 +577,8 @@ body.novedades-open .whatsapp-float {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.55);
+    /* El difuminado de pantalla completa sobre el lienzo de las particulas es de
+       lo mas caro que hay en un telefono debil. En movil el oscurecido basta. */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     opacity: 0;
@@ -978,6 +980,17 @@ body.novedades-open .whatsapp-float {
     border: 1px solid rgba(0, 0, 0, 0.04);
     transition: var(--transition);
     position: relative;
+}
+
+/* El grid de hombre tiene 123 tarjetas, el de mujer 113 y el de unisex 63.
+   Con content-visibility el navegador NO dibuja las que estan fuera de
+   pantalla: solo calcula su layout cuando van apareciendo. En un telefono
+   debil eso es la diferencia entre scrollear fluido y ir a trompicones.
+   contain-intrinsic-size con "auto" recuerda el ultimo tamaño real, asi que
+   la barra de desplazamiento no da saltos. */
+.product-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 320px;
 }
 
 .product-card:hover {
@@ -3879,6 +3892,15 @@ body.modal-open .whatsapp-float {
         background: rgba(255, 255, 255, 0.99);
     }
 
+    /* El difuminado de pantalla completa obliga a releer y difuminar lo que hay
+       debajo en cada frame. Con el lienzo de las partículas repintando 30
+       veces por segundo, esto solo resta render en un teléfono débil. */
+    .nav__overlay,
+    .novedades__overlay {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
     /* Reducir transiciones en tarjetas */
     .product-card {
         transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -3981,11 +4003,11 @@ body.modal-open .whatsapp-float {
     .hero__decos .hero-deco {
         animation: none;
     }
-    html:not(.perf-lite) .hero__decos .hero-deco--pumpkin { animation: pumpkinGlowPulse 4s ease-in-out infinite alternate; }
-    html:not(.perf-lite) .hero__decos .hero-deco--spider-hang { animation: spiderHangSmooth 7s ease-in-out infinite; }
-    html:not(.perf-lite) .hero__decos .hero-deco--rose,
-    html:not(.perf-lite) .hero__decos .hero-deco--amistad,
-    html:not(.perf-lite) .hero__decos .hero-deco--floral { animation: decoSway 6s ease-in-out infinite; }
+    .hero__decos .hero-deco--pumpkin { animation: pumpkinGlowPulse 4s ease-in-out infinite alternate; }
+    .hero__decos .hero-deco--spider-hang { animation: spiderHangSmooth 7s ease-in-out infinite; }
+    .hero__decos .hero-deco--rose,
+    .hero__decos .hero-deco--amistad,
+    .hero__decos .hero-deco--floral { animation: decoSway 6s ease-in-out infinite; }
 
     /* Sombra única en el botón WhatsApp */
     .whatsapp-float {
@@ -4096,11 +4118,11 @@ body.modal-open .whatsapp-float {
         animation: none;
     }
     /* .perf-lite se agrega en <html> por js/animaciones.js */
-    html:not(.perf-lite) .hero-deco--pumpkin { animation: pumpkinGlowPulse 4s ease-in-out infinite alternate; }
-    html:not(.perf-lite) .hero-deco--spider-hang { animation: spiderHangSmooth 7s ease-in-out infinite; }
-    html:not(.perf-lite) .hero-deco--rose,
-    html:not(.perf-lite) .hero-deco--amistad,
-    html:not(.perf-lite) .hero-deco--floral { animation: decoSway 6s ease-in-out infinite; }
+    .hero-deco--pumpkin { animation: pumpkinGlowPulse 4s ease-in-out infinite alternate; }
+    .hero-deco--spider-hang { animation: spiderHangSmooth 7s ease-in-out infinite; }
+    .hero-deco--rose,
+    .hero-deco--amistad,
+    .hero-deco--floral { animation: decoSway 6s ease-in-out infinite; }
 
     /* Quitar blur del header en iOS para mejorar FPS en modo normal, pero respetar eventos */
     .header:not(.event-themed) {
