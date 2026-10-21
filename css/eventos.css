@@ -819,10 +819,13 @@ body[data-event] .location__visual {
        OJO: se usa 'vh' y NO 'dvh'. La unidad dinamica ('dvh') cambia de valor
        cuando la barra de la URL del celular se esconde al hacer scroll, y eso
        movia las decoraciones de sitio de golpe. 'vh' es el viewport grande y
-       es constante durante todo el scroll. */
+       es constante durante todo el scroll.
+
+       El 64% (no 58%) deja la calabaza asomando por encima de la tarjeta:
+       con el buscador del hero los botones bajan y ocuparian su lugar. */
     .hero-deco--pumpkin {
         width: 132px;
-        top: 58vh;
+        top: 64vh;
         bottom: auto;
         right: -6px;
     }

@@ -849,14 +849,17 @@ var DecoracionesSVG = (function() {
                 '<g transform="translate(-1088,244) scale(1.2)">' +
                 '<g class="xm-tree">' + XM_TREE_MOVIL + '</g>' +
                 '</g>' +
-                // casitas a la izquierda. Bajaron 61 unidades de escena: los
-                // tejados cruzaban el texto del boton "COLECCION MUJER" (el
-                // boton va de y=459 a y=508 y las casitas arrancaban en 479).
-                '<g transform="translate(-39,715) scale(0.62)">' +
+                // casitas a la izquierda. Con el buscador del hero los botones
+                // bajan y las casitas quedaban tapadas por el terreno de la
+                // escena. Ahora se apoyan en la linea del horizonte, por
+                // debajo del texto del boton "COLECCION MUJER".
+                '<g transform="translate(-39,773) scale(0.62)">' +
                 '<g class="xm-houses" opacity="0.95">' + XM_HOUSES + '</g>' +
                 '</g>' +
-                // regalos a la derecha
-                '<g transform="translate(-695,403) scale(0.9)">' +
+                // regalos a la derecha. Bajaron 115 unidades de escena: con el
+                // buscador del hero los botones bajan y los regalos quedaban
+                // encimados con el boton "COLECCION MUJER".
+                '<g transform="translate(-695,518) scale(0.9)">' +
                 '<g class="xm-gifts">' +
                 '<rect x="1350" y="785" width="46" height="42" rx="3" fill="#c0392b"/>' +
                 '<rect x="1369" y="785" width="8" height="42" fill="#ffd700"/>' +

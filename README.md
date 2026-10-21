@@ -129,6 +129,7 @@ manizales-perfumeria/
 ## 📱 Características
 
 - ✅ Diseño 100% responsive (móvil, tablet, PC)
+- ✅ Buscador en el inicio: busca en todo el catálogo sin salir de la portada
 - ✅ Colores dinámicos por tipo de perfume
 - ✅ Botón flotante de WhatsApp
 - ✅ Panel de administración completo

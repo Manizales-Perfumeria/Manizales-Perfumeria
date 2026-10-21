@@ -1240,6 +1240,196 @@ function initSearch() {
     });
 }
 
+// === BUSCADOR DEL HERO ===
+// El buscador del inicio busca en TODO el catalogo y muestra los resultados
+// desplegados debajo del campo, sin obligar a meterse a otra seccion.
+var heroSearchTimer = null;
+var heroSearchListo = false;
+
+function escaparHtml(texto) {
+    return String(texto == null ? '' : texto)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function initHeroSearch() {
+    if (heroSearchListo) return;
+    var form = document.getElementById('hero-search');
+    var input = document.getElementById('hero-search-input');
+    var results = document.getElementById('hero-search-results');
+    var clearBtn = document.getElementById('hero-search-clear');
+    if (!form || !input || !results) return;
+    heroSearchListo = true;
+
+    var items = [];
+    var indiceActivo = -1;
+
+    function cerrar() {
+        results.hidden = true;
+        results.innerHTML = '';
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        indiceActivo = -1;
+        items = [];
+    }
+
+    function resaltar(i) {
+        indiceActivo = i;
+        for (var j = 0; j < items.length; j++) {
+            var on = j === i;
+            items[j].classList.toggle('is-active', on);
+            if (on) {
+                items[j].setAttribute('aria-selected', 'true');
+                input.setAttribute('aria-activedescendant', items[j].id);
+                if (items[j].scrollIntoView) items[j].scrollIntoView({ block: 'nearest' });
+            } else {
+                items[j].removeAttribute('aria-selected');
+            }
+        }
+    }
+
+    // Los resultados se ordenan: primero los que el nombre empieza por lo
+    // que se escribio, luego los que lo contienen, y al final la marca.
+    function ordenar(lista, q) {
+        var qn = normalizeSearchText(q);
+        return lista.slice().sort(function(a, b) {
+            var an = normalizeSearchText(a.nombre), bn = normalizeSearchText(b.nombre);
+            var ab = normalizeSearchText(a.marca), bb = normalizeSearchText(b.marca);
+            var pa = an.indexOf(qn) === 0 ? 0 : (an.indexOf(qn) !== -1 ? 1 : (ab.indexOf(qn) !== -1 ? 2 : 3));
+            var pb = bn.indexOf(qn) === 0 ? 0 : (bn.indexOf(qn) !== -1 ? 1 : (bb.indexOf(qn) !== -1 ? 2 : 3));
+            if (pa !== pb) return pa - pb;
+            return (a.precio || 0) - (b.precio || 0);
+        });
+    }
+
+    function buscar(q) {
+        var activos = products.filter(function(p) { return p && p.activo !== false; });
+        if (q) {
+            return ordenar(activos.filter(function(p) { return matchSearchQuery(p, q); }), q);
+        }
+        // Sin texto se muestran los destacados, para que se vea que hay cosas
+        // para buscar sin tener que escribir nada.
+        var dest = activos.filter(function(p) { return p.destacado; });
+        return dest.length ? dest.slice(0, 6) : activos.slice(0, 6);
+    }
+
+    // En el celular la lista se abre hacia arriba, asi que su alto depende
+    // de cuanto espacio hay entre el campo y el menu. Se calcula para que
+    // nunca se meta debajo de la barra de navegacion.
+    function limitarAltura() {
+        if (window.innerWidth > 768) { results.style.maxHeight = ''; return; }
+        var r = input.getBoundingClientRect();
+        var disponible = Math.floor(r.top - 94);
+        results.style.maxHeight = Math.max(140, Math.min(300, disponible)) + 'px';
+    }
+
+    function pintar(lista, q) {
+        limitarAltura();
+        if (!lista.length) {
+            results.innerHTML = '<div class="hero-search__empty">No encontramos fragancias con "' + escaparHtml(q) + '".<br>Prueba con el nombre o con la marca.</div>';
+            results.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+            items = [];
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < lista.length; i++) {
+            var p = lista[i];
+            var rutas = (typeof window.imagenesProducto === 'function') ? window.imagenesProducto(p) : null;
+            var thumb = rutas ? rutas.thumb : (p.imagen || '');
+            html += '<button type="button" class="hero-search__item" id="hero-search-item-' + p.id + '" role="option" aria-selected="false" data-id="' + p.id + '">' +
+                '<img class="hero-search__thumb" src="' + escaparHtml(thumb) + '" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' +
+                '<span class="hero-search__info">' +
+                    '<span class="hero-search__name">' + escaparHtml(p.nombre) + '</span>' +
+                    '<span class="hero-search__brand">' + escaparHtml(p.marca || '') + '</span>' +
+                '</span>' +
+                '<span class="hero-search__price">' + (p.precio ? '$' + Number(p.precio).toLocaleString('es-CO') : 'Consultar') + '</span>' +
+            '</button>';
+        }
+        if (q) {
+            html += '<div class="hero-search__count">' + lista.length + (lista.length === 1 ? ' fragancia encontrada' : ' fragancias encontradas') + '</div>';
+        }
+        results.innerHTML = html;
+        results.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+        items = Array.prototype.slice.call(results.querySelectorAll('.hero-search__item'));
+        indiceActivo = -1;
+    }
+
+    function actualizar() {
+        var q = input.value.trim();
+        if (clearBtn) clearBtn.hidden = !q;
+        if (!q) { cerrar(); return; }
+        pintar(buscar(q), q);
+    }
+
+    input.addEventListener('input', function() {
+        clearTimeout(heroSearchTimer);
+        heroSearchTimer = setTimeout(actualizar, 140);
+    });
+
+    input.addEventListener('focus', function() {
+        if (input.value.trim()) return;
+        pintar(buscar(''), '');
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown' && items.length) {
+            e.preventDefault();
+            resaltar((indiceActivo + 1) % items.length);
+        } else if (e.key === 'ArrowUp' && items.length) {
+            e.preventDefault();
+            resaltar((indiceActivo - 1 + items.length) % items.length);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            var el = indiceActivo >= 0 ? items[indiceActivo] : items[0];
+            if (el) {
+                var id = parseInt(el.getAttribute('data-id'), 10);
+                cerrar();
+                input.blur();
+                if (typeof openProductModal === 'function') openProductModal(id);
+            }
+        } else if (e.key === 'Escape') {
+            cerrar();
+            input.blur();
+        }
+    });
+
+    results.addEventListener('click', function(e) {
+        var item = e.target.closest ? e.target.closest('.hero-search__item') : null;
+        if (!item) return;
+        var id = parseInt(item.getAttribute('data-id'), 10);
+        cerrar();
+        input.blur();
+        if (typeof openProductModal === 'function') openProductModal(id);
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            input.value = '';
+            clearBtn.hidden = true;
+            cerrar();
+            input.focus();
+        });
+    }
+
+    // El formulario no se envia nunca: la busqueda es en vivo.
+    form.addEventListener('submit', function(e) { e.preventDefault(); });
+
+    document.addEventListener('click', function(e) {
+        if (results.hidden) return;
+        if (!form.contains(e.target)) cerrar();
+    });
+
+    input.addEventListener('blur', function() {
+        // Un clic sobre un resultado llega antes que el blur, asi que se
+        // espera un momento antes de cerrar y no se cierra antes de tiempo.
+        setTimeout(function() {
+            if (document.activeElement !== input && !form.contains(document.activeElement)) cerrar();
+        }, 140);
+    });
+}
+
 // === DYNAMIC STATS ===
 function updateDynamicStats() {
     var totalProducts = products.filter(function(p) { return p.activo; }).length;
@@ -1322,6 +1512,7 @@ function initProducts() {
     renderFraganciaDelMes();
     updateDynamicStats();
     initSearch();
+    initHeroSearch();
     updateScrollReveal();
 
     // Inicializar eventos estacionales

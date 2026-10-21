@@ -4019,3 +4019,255 @@ body.modal-open .whatsapp-float {
         -webkit-backdrop-filter: none !important;
     }
 }
+
+/* =========================================================
+   BUSCADOR DEL HERO
+   Aparece en el inicio para no tener que meterse a otra
+   seccion a buscar. Pensado para escritorio, celular e iOS.
+   ========================================================= */
+.hero-search {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 0 32px;
+    z-index: 20;
+}
+
+.hero-search__icon {
+    position: absolute;
+    left: 19px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: rgba(255, 255, 255, 0.62);
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.hero-search__input {
+    width: 100%;
+    height: 52px;
+    padding: 0 50px 0 52px;
+    /* 16px es el minimo en iOS: con menos Safari hace zoom al enfocar */
+    font-size: 16px;
+    font-family: var(--font-body);
+    color: #fff;
+    /* Oscuro y casi opaco: si fuera muy transparente se verian las ventanas
+       encendidas de la mansion de Halloween por detras del campo. */
+    background: rgba(18, 14, 26, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-search__input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.hero-search__input:focus {
+    border-color: var(--event-accent, var(--color-primary));
+    background: rgba(18, 14, 26, 0.97);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+/* iOS pone su propia X: se oculta porque hay un boton propio */
+.hero-search__input::-webkit-search-cancel-button,
+.hero-search__input::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+.hero-search__clear {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.14);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.hero-search__clear[hidden] {
+    display: none;
+}
+
+.hero-search__clear:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.24);
+}
+
+/* === Lista de resultados === */
+.hero-search__results {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    max-height: 340px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: rgba(16, 13, 24, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+    z-index: 30;
+}
+
+.hero-search__results[hidden] {
+    display: none;
+}
+
+.hero-search__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    text-align: left;
+    color: #fff;
+    font-family: var(--font-body);
+    cursor: pointer;
+}
+
+.hero-search__item:last-child {
+    border-bottom: none;
+}
+
+.hero-search__item:hover,
+.hero-search__item.is-active {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.hero-search__thumb {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hero-search__info {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hero-search__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero-search__brand {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.62);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero-search__price {
+    flex: 0 0 auto;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--event-accent, var(--color-primary));
+    white-space: nowrap;
+}
+
+.hero-search__empty {
+    padding: 18px 16px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.68);
+    text-align: center;
+}
+
+.hero-search__count {
+    padding: 9px 14px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.04);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* === Celular y tablet === */
+@media (max-width: 768px) {
+    .hero-search {
+        /* No se pone max-width: 100% porque en tablet (768px) el campo se
+           estiraba a 690px y dominaba la pantalla. Con el max-width de 440px
+           de la regla base, en el celular toma el ancho del contenido. */
+        margin: 0 0 24px;
+    }
+
+    /* El hero centra su contenido verticalmente, asi que al agregar el
+       buscador el bloque subia y el distintivo quedaba pegado al menu. Con
+       este relleno el contenido vuelve a arrancar donde estaba, y lo que
+       crece es hacia abajo (tarjeta y decoraciones). */
+    .hero__grid {
+        padding-top: 72px;
+    }
+
+
+    .hero-search__input {
+        height: 50px;
+        padding: 0 46px 0 48px;
+    }
+
+    .hero-search__icon {
+        left: 16px;
+    }
+
+    .hero-search__clear {
+        right: 12px;
+    }
+
+    /* En el celular la lista se abre HACIA ARRIBA: asi queda por encima del
+       teclado de iOS y de Android, que ocupa la parte de abajo de la
+       pantalla y taparia la mitad de los resultados. El alto esta acotado
+       para que la lista nunca llegue a meterse debajo del menu. */
+    .hero-search__results {
+        top: auto;
+        bottom: calc(100% + 10px);
+        max-height: min(46vh, 300px);
+    }
+
+    .hero-search__thumb {
+        flex: 0 0 38px;
+        width: 38px;
+        height: 38px;
+    }
+}
+
+/* === iOS: sin zoom al enfocar y sin el menu contextual del input === */
+@supports (-webkit-touch-callout: none) {
+    .hero-search__input {
+        /* Safari ignora font-size menor a 16px y hace zoom al enfocar */
+        font-size: 16px;
+        -webkit-user-select: text;
+        user-select: text;
+    }
+}
