@@ -976,7 +976,7 @@ var AuraIA = (function() {
         // Filtro por presupuesto si existe.
         // Antes: si NADA cumplía el presupuesto, se ignoraba el filtro en silencio y
         // devolvía las fragancias más caras diciendo que eran "op económicas". El
-        // catálogo real empieza en $110.000, así que cualquier presupuesto menor
+        // catálogo real empieza en $120.000, así que cualquier presupuesto menor
         // quedaba sin satisfacer y el usuario recibía una respuesta falsa.
         var budgetMax = options.budgetMax || null;
         var budgetImposible = false;

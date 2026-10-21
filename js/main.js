@@ -686,7 +686,7 @@ function getDefaultProducts() {
             ideal_para: "Días cálidos, uso diario, oficina, citas casuales, verano",
             duracion: "Media (4-6 horas)",
             intensidad: "Moderada - Ideal para uso diurno",
-            precio: 110000,
+            precio: 120000,
             precio_anterior: null,
             imagen: "Perfumes Mujer/clinique-happy-men.jpg",
             categoria: "hombre",
