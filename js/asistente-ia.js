@@ -1991,29 +1991,29 @@ var AuraIA = (function() {
         // 1-EARLY. DESCUENTOS Y OFERTAS — se evalúa MUY TEMPRANO para que preguntas como
         // "¿Tienen descuentos?" no sean capturadas por el handler de stock (que tiene "tienen").
         if (isDiscountQuery(text)) {
-            var activeDiscountEarly = getActiveDiscountInfo();
-            var promoProductsEarly = getCatalog().filter(function(p) { return p.destacado || p.en_promocion; }).slice(0, 3);
-            if (!promoProductsEarly.length) promoProductsEarly = getCatalog().slice(0, 3);
+            var eventoVigente = (typeof EventosManager !== 'undefined' && EventosManager.getEventoActivo) ? EventosManager.getEventoActivo() : null;
+            var destacadosEarly = productosDestacadosDelEvento(3);
 
-            if (activeDiscountEarly.hasDiscount) {
-                state.lastRecommendedIds = promoProductsEarly.map(function(m) { return m.id; });
-                state.currentFocusProduct = promoProductsEarly[0] || null;
+            if (eventoVigente) {
+                state.lastRecommendedIds = destacadosEarly.map(function(m) { return m.id; });
+                state.currentFocusProduct = destacadosEarly[0] || null;
                 return {
                     type: 'recommendation',
-                    content: "🎉 **¡Sí! Actualmente tenemos activo el evento de " + activeDiscountEarly.name + " con un " + activeDiscountEarly.pct + "% de descuento en TODAS nuestras fragancias.**\n\n" +
-                             "Aquí te muestro algunas de las opciones más aclamadas con el descuento ya aplicado:",
-                    products: promoProductsEarly
-                };
-            } else {
-                return {
-                    type: 'text',
-                    content: "💎 **Sobre nuestros descuentos y promociones:**\n\n" +
-                             "En este momento **no tenemos un evento de descuento activo**, pero manejamos precios directos muy competitivos sin intermediarios en perfumería árabe y de diseñador importada.\n\n" +
-                             "• **Para pedidos de 2 o más frascos** o compras especiales siempre buscamos la mejor condición para ti.\n" +
-                             "• Nuestras **promociones especiales** (Navidad, San Valentín, Amor & Amistad, etc.) se anuncian con anticipación por WhatsApp.\n\n" +
-                             "📲 ¿Quieres que te avisen cuando haya una promoción activa? Escríbenos: [Contactar por WhatsApp →](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, quiero que me avisen cuando tengan descuentos o promociones activas.') + ")"
+                    content: "💎 **Sobre nuestros precios:**\n\n" +
+                             "Manejamos **precio directo** en perfumería árabe y de diseñador importada, sin intermediarios. **No manejamos descuentos ni rebajas automáticas**: el precio que ves es el precio final.\n\n" +
+                             "Lo que sí tenemos activo ahora es la **" + eventoVigente.nombre + "**: una selección de fragancias que encajan con esa fecha. Te dejo las más destacadas:",
+                    products: destacadosEarly
                 };
             }
+
+            return {
+                type: 'text',
+                content: "💎 **Sobre nuestros precios:**\n\n" +
+                         "Manejamos **precios directos** en perfumería árabe y de diseñador importada, sin intermediarios. **No tenemos descuentos permanentes ni rebajas automáticas** en el catálogo: el precio que ves es el precio final.\n\n" +
+                         "• Para pedidos de **2 o más frascos** o compras especiales, siempre buscamos la mejor condición para ti.\n" +
+                         "• Cuando llega una fecha especial (Navidad, San Valentín, Amor & Amistad...) el sitio se viste de esa temática y te mostramos **las fragancias que mejor encajan** con ese momento.\n\n" +
+                         "📲 ¿Quieres que te avisen por WhatsApp cuando haya novedades? Escríbenos: [Contactar por WhatsApp →](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, quiero que me avisen cuando tengan novedades o promociones activas.') + ")"
+            };
         }
 
         // 1b. QUEJAS Y POST-VENTA
@@ -2100,17 +2100,12 @@ var AuraIA = (function() {
             }
             if (targetProd) {
                 state.currentFocusProduct = targetProd;
-                var discI = getActiveDiscountInfo();
-                var priceI = targetProd.precio;
-                var finalPriceI = (discI.hasDiscount && priceI)
-                    ? (typeof EventosManager !== 'undefined' && EventosManager.calcularPrecioConDescuento ? EventosManager.calcularPrecioConDescuento(priceI) : Math.round(priceI * (1 - discI.pct / 100)))
-                    : priceI;
-                var priceStrI = finalPriceI ? '$' + finalPriceI.toLocaleString('es-CO') : 'Consultar';
+                var priceStrI = targetProd.precio ? '$' + targetProd.precio.toLocaleString('es-CO') : 'Consultar';
                 var waI = encodeURIComponent('¡Hola Perfumería Manizales! Me interesa el ' + targetProd.nombre + ' (' + (targetProd.marca || '') + ') que me recomendó Aura AI. ¿Podría darme más información para comprarlo?');
                 return {
                     type: 'single_product',
                     content: "✨ **¡Excelente elección! " + targetProd.nombre + "** es una de las fragancias más apreciadas de nuestro catálogo.\n\n" +
-                             "💰 **Precio:** **" + priceStrI + "**" + (discI.hasDiscount ? " *(con " + discI.pct + "% OFF ya aplicado)*" : "") + "\n\n" +
+                             "💰 **Precio:** **" + priceStrI + "**\n\n" +
                              "Para apartar tu frasco ahora mismo y coordinar tu entrega, solo presiona el botón **'Pedir'** o toca aquí:\n\n" +
                              "📲 [Pedir " + targetProd.nombre + " por WhatsApp →](https://wa.me/573147551411?text=" + waI + ")",
                     products: [targetProd]
@@ -2275,10 +2270,10 @@ var AuraIA = (function() {
             return {
                 type: 'text',
                 content: "📱 **Encuéntranos en Redes Sociales:**\n\n" +
-                         "• 📸 **Instagram:** [@manizalesperfumeria](https://www.instagram.com/manizalesperfumeria) — Aquí publicamos novedades, ofertas y reviews en video de cada fragancia.\n" +
+                         "• 📸 **Instagram:** [@manizalesperfumeria](https://www.instagram.com/manizalesperfumeria) — Aquí publicamos novedades, lanzamientos y reviews en video de cada fragancia.\n" +
                          "• 💬 **WhatsApp:** [+57 314 7551411](https://wa.me/573147551411) — Canal principal de ventas y atención personalizada.\n" +
                          "• 🎵 **TikTok:** Búscanos como **@manizalesperfumeria** para ver reseñas, unboxings y comparativas en video.\n\n" +
-                         "¡Síguenos para enterarte primero de todas las promociones y novedades! ¿En qué más puedo ayudarte?"
+                         "¡Síguenos para enterarte primero de todas las novedades! ¿En qué más puedo ayudarte?"
             };
         }
 
@@ -2356,10 +2351,7 @@ var AuraIA = (function() {
         ])) {
             var targetProduct = state.currentFocusProduct;
             var prodNote = targetProduct ? (" de **" + targetProduct.nombre + "**") : "";
-            var discount = getActiveDiscountInfo();
-            var finalPrice = (targetProduct && discount.hasDiscount && targetProduct.precio)
-                ? (typeof EventosManager !== 'undefined' && EventosManager.calcularPrecioConDescuento ? EventosManager.calcularPrecioConDescuento(targetProduct.precio) : Math.round(targetProduct.precio * (1 - discount.pct / 100)))
-                : (targetProduct ? targetProduct.precio : null);
+            var finalPrice = targetProduct ? targetProduct.precio : null;
             var priceStr = finalPrice ? ' por solo **$' + finalPrice.toLocaleString('es-CO') + '**' : '';
 
             var contentText = "💬 **Las compras y pedidos se realizan 100% vía WhatsApp:**\n\n" +
@@ -2450,15 +2442,12 @@ var AuraIA = (function() {
 
         // 7c. NEGOCIACIÓN DE PRECIO / DESCUENTOS ESPECIALES
         if (containsAny(text, DICTIONARY.negociacion)) {
-            var discount = getActiveDiscountInfo();
             return {
                 type: 'text',
-                content: "💛 **Precios y descuentos especiales:**\n\n" +
-                         (discount.hasDiscount
-                             ? ("🎉 ¡Estás de suerte! Tenemos activo el **" + discount.pct + "% de descuento por " + discount.name + "** en todas nuestras fragancias. ¡Ya estás obteniendo el mejor precio disponible!\n\n")
-                             : "Nuestros precios son los más justos y directos del mercado en perfumería árabe y de diseñador importada.\n\n") +
-                         "Para pedidos de **2 o más frascos** o compras especiales, puedes consultar condiciones directamente con nuestro asesor por WhatsApp — siempre buscamos la mejor experiencia para ti.\n\n" +
-                         "📲 [Consultar precio especial →](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, estoy interesado en comprar y quisiera saber si tienen algún descuento especial o precio por cantidad.') + ")"
+                content: "💎 **Precios y condiciones especiales:**\n\n" +
+                         "Nuestros precios son los más justos y directos del mercado en perfumería árabe y de diseñador importada, **sin intermediarios y sin letra chica**.\n\n" +
+                         "Para pedidos de **2 o más frascos** o compras especiales, puedes consultar condiciones directamente con nuestro asesor por WhatsApp 👉 siempre buscamos la mejor experiencia para ti.\n\n" +
+                         "💬 [Consultar precio especial 💬](https://wa.me/573147551411?text=" + encodeURIComponent('Hola, estoy interesado en comprar y quisiera saber si tienen alguna condición especial o precio por cantidad.') + ")"
             };
         }
 
@@ -2848,16 +2837,15 @@ var AuraIA = (function() {
         // 21b. CONSULTA DE OFERTAS / DESCUENTOS ACTIVOS (fallback, en caso de no haber sido
         // capturado por el paso 1-EARLY — esto puede ocurrir con frases muy genéricas de precio)
         if (containsAny(text, DICTIONARY.precios) && containsAny(text, ['descuento', 'descuentos', 'oferta', 'ofertas', 'promocion', 'promociones', 'rebaja', 'rebajas', 'evento'])) {
-            var activeDiscount = getActiveDiscountInfo();
-            var promoProducts = getCatalog().filter(function(p) { return p.destacado || p.en_promocion; }).slice(0, 3);
-            if (!promoProducts.length) promoProducts = getCatalog().slice(0, 3);
+            var destacadosFallback = productosDestacadosDelEvento(3);
+            var eventoFallback = (typeof EventosManager !== 'undefined' && EventosManager.getEventoActivo) ? EventosManager.getEventoActivo() : null;
 
             return {
                 type: 'recommendation',
-                content: activeDiscount.hasDiscount 
-                    ? "🎉 ¡Estás de suerte! Actualmente tenemos activo el evento de **" + activeDiscount.name + "** con un **" + activeDiscount.pct + "% de descuento en todas nuestras fragancias**.\n\nAquí tienes algunas de las opciones más aclamadas con el descuento aplicado:"
+                content: eventoFallback
+                    ? "💎 En **Perfumería Manizales** los precios son directos, sin intermediarios, y **no aplicamos descuentos**. Ahora mismo estamos en **" + eventoFallback.nombre + "**, así que te dejo las fragancias que mejor encajan con esa fecha:"
                     : "💎 En **Perfumería Manizales** mantenemos los mejores precios directos en perfumería árabe y de diseñador. Aquí tienes opciones destacadas con excelente relación calidad-precio:",
-                products: promoProducts
+                products: destacadosFallback
             };
         }
 
@@ -2947,68 +2935,42 @@ var AuraIA = (function() {
         ]);
     }
 
+    /* Los eventos ya NO tienen descuentos: solo cambian la tematica del sitio
+       y muestran las fragancias que mejor encajan con esa fecha. Esta funcion
+       se conserva para que el resto del codigo siga funcionando, pero siempre
+       informa que no hay descuento activo. */
     function getActiveDiscountInfo() {
-        var pct = 0;
-        var name = '';
-        var nextEvent = null;
-
-        if (typeof EventosManager !== 'undefined' && EventosManager.getDescuentoActivo) {
-            pct = EventosManager.getDescuentoActivo();
-            var ev = EventosManager.getEventoActivo ? EventosManager.getEventoActivo() : null;
-            if (ev) name = ev.nombre;
+        var nombre = '';
+        if (typeof EventosManager !== 'undefined' && EventosManager.getEventoActivo) {
+            var ev = EventosManager.getEventoActivo();
+            if (ev) nombre = ev.nombre;
         }
+        return { hasDiscount: false, pct: 0, name: nombre, nextEvent: null };
+    }
 
-        // Si no hay evento activo, buscar el próximo
-        if (pct === 0 && typeof EventosManager !== 'undefined' && EventosManager.EVENTOS) {
-            var ahora = new Date();
-            var mesSig = ahora.getMonth();
-            var diaSig = ahora.getDate();
-            var anioSig = ahora.getFullYear();
-            var menorDiff = Infinity;
-            var EVENTOS = EventosManager.EVENTOS;
-
-            for (var i = 0; i < EVENTOS.length; i++) {
-                var eCandidate = EVENTOS[i];
-                var eIni = eCandidate.fechaInicio;
-                if (!eIni) continue;
-                // Calcular días hasta el inicio de este evento (este año o el próximo)
-                var eFecha = new Date(anioSig, eIni.mes, eIni.dia);
-                if (eFecha < ahora) {
-                    // Probar el año que viene
-                    eFecha = new Date(anioSig + 1, eIni.mes, eIni.dia);
-                }
-                var diff = (eFecha - ahora) / (1000 * 60 * 60 * 24);
-                if (diff < menorDiff) {
-                    menorDiff = diff;
-                    var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-                    nextEvent = {
-                        nombre: eCandidate.nombre,
-                        emoji: eCandidate.emoji || '🎉',
-                        descuento: eCandidate.descuento || 0,
-                        diasRestantes: Math.round(diff),
-                        fechaStr: eIni.dia + ' de ' + meses[eIni.mes]
-                    };
-                }
+    /* Fragancias que destacan para el evento que esta activo. Si no hay
+       evento, se recurren a los productos marcados como destacado. */
+    function productosDestacadosDelEvento(cantidad) {
+        var limite = cantidad || 3;
+        var lista = [];
+        if (typeof EventosManager !== 'undefined' && EventosManager.getEventoActivo && EventosManager.filtrarProductosPorEvento) {
+            var ev = EventosManager.getEventoActivo();
+            if (ev) {
+                try { lista = EventosManager.filtrarProductosPorEvento(ev) || []; } catch (e) { lista = []; }
             }
         }
-
-        return {
-            hasDiscount: pct > 0,
-            pct: pct,
-            name: name || 'Promoción Especial',
-            nextEvent: nextEvent
-        };
+        if (!lista.length) {
+            lista = getCatalog().filter(function (p) { return p.destacado; });
+        }
+        if (!lista.length) lista = getCatalog();
+        return lista.slice(0, limite);
     }
 
     // === GENERADORES DE TEXTO EXPLICATIVO PERSUASIVO ===
     function generatePerfumeDeepDive(product, userQuery) {
-        var discount = getActiveDiscountInfo();
-        var finalPrice = (discount.hasDiscount && product.precio) 
-            ? (typeof EventosManager !== 'undefined' && EventosManager.calcularPrecioConDescuento ? EventosManager.calcularPrecioConDescuento(product.precio) : Math.round(product.precio * (1 - discount.pct / 100))) 
-            : product.precio;
-
+        var finalPrice = product.precio;
         var priceStr = finalPrice ? '$' + finalPrice.toLocaleString('es-CO') : 'Consultar';
-        var oldPriceStr = (discount.hasDiscount && product.precio) ? ' (Antes: ~$' + product.precio.toLocaleString('es-CO') + '~)' : '';
+        var oldPriceStr = '';
 
         var text = "✨ **Análisis Sommelier de " + product.nombre + "** (" + (product.marca || 'Casa Perfumera') + ")\n\n" +
                    "• **Aura y Sensación:** " + (product.transmite || product.descripcion_corta || 'Una fragancia imponente y sofisticada.') + "\n" +
@@ -3019,7 +2981,7 @@ var AuraIA = (function() {
                    "   🪵 *Fondo:* " + (product.notas_fondo || product.notas || 'Fijación duradera') + "\n" +
                    "• **Rendimiento:** Duración " + (product.duracion || 'Excelente (8-10h+)') + " con intensidad " + (product.intensidad || 'Moderada-Alta') + ".\n" +
                    "• **Ocasión Ideal:** " + (product.ideal_para || 'Versátil para destacar en cualquier momento.') + "\n\n" +
-                   "💰 **Inversión:** **" + priceStr + "**" + oldPriceStr + (discount.hasDiscount ? " *(Incluye " + discount.pct + "% OFF por " + discount.name + ")*" : "") + ".\n\n" +
+                   "💰 **Inversión:** **" + priceStr + "**" + oldPriceStr + ".\n\n" +
                    "¿Deseas que preparemos tu despacho por WhatsApp o te gustaría ver cómo se compara con otra fragancia?";
 
         return {
@@ -3030,57 +2992,50 @@ var AuraIA = (function() {
     }
 
     function generateRecommendationIntro(queryText, matchedList) {
-        var discount = getActiveDiscountInfo();
-        var discountNote = discount.hasDiscount ? " (Todos aplican para el **" + discount.pct + "% de descuento por " + discount.name + "**)" : "";
         var gTitle = state.userPreferences.gender === 'hombre' ? ' (Hombre)' : state.userPreferences.gender === 'mujer' ? ' (Mujer)' : state.userPreferences.gender === 'unisex' ? ' (Unisex)' : '';
 
         if (state.userPreferences.occasion === 'oficina' || containsAny(queryText, DICTIONARY.oficina)) {
-            return "💼 **Elegancia y Versatilidad Profesional" + gTitle + ":** He seleccionado fragancias con proyección limpia, distinguida y excelente duración para oficina, reuniones y uso diario:" + discountNote;
+            return "💼 **Elegancia y Versatilidad Profesional" + gTitle + ":** He seleccionado fragancias con proyección limpia, distinguida y excelente duración para oficina, reuniones y uso diario:";
         }
         if (state.userPreferences.occasion === 'cita' || containsAny(queryText, DICTIONARY.cita)) {
-            return "🌹 **Selección de Seducción y Romance" + gTitle + ":** He seleccionado fragancias con acordes magnéticos y sensuales que generan cumplidos inmediatos y dejan una huella imborrable:" + discountNote;
+            return "🌹 **Selección de Seducción y Romance" + gTitle + ":** He seleccionado fragancias con acordes magnéticos y sensuales que generan cumplidos inmediatos y dejan una huella imborrable:";
         }
         if (state.userPreferences.occasion === 'fiesta' || containsAny(queryText, DICTIONARY.fiesta)) {
-            return "🔥 **Potencia y Proyección para la Noche" + gTitle + ":** Si buscas destacar en la noche y que tu estela se sienta al entrar a cualquier lugar, estas son las joyas indicadas:" + discountNote;
+            return "🔥 **Potencia y Proyección para la Noche" + gTitle + ":** Si buscas destacar en la noche y que tu estela se sienta al entrar a cualquier lugar, estas son las joyas indicadas:";
         }
         if (state.userPreferences.occasion === 'calor' || containsAny(queryText, DICTIONARY.calor)) {
-            return "☀️ **Frescura y Vitalidad para Clima Cálido" + gTitle + ":** Fragancias cítricas, acuáticas y florales frescas que no empalagan y revitalizan con elegancia:" + discountNote;
+            return "☀️ **Frescura y Vitalidad para Clima Cálido" + gTitle + ":** Fragancias cítricas, acuáticas y florales frescas que no empalagan y revitalizan con elegancia:";
         }
         if (state.userPreferences.occasion === 'navidad' || containsAny(queryText, DICTIONARY.navidad)) {
-            return "🎄 **Selección Navideña y Noches Festivas" + gTitle + ":** Para las celebraciones de Navidad y fin de año, he seleccionado fragancias cálidas, envolventes y sofisticadas que dejan una estela inolvidable:" + discountNote;
+            return "🎄 **Selección Navideña y Noches Festivas" + gTitle + ":** Para las celebraciones de Navidad y fin de año, he seleccionado fragancias cálidas, envolventes y sofisticadas que dejan una estela inolvidable:";
         }
         if (state.userPreferences.potency === 'alta' || containsAny(queryText, DICTIONARY.potencia)) {
-            return "🔥 **Selección Modo Bestia y Duración Extrema" + gTitle + ":** He seleccionado las fragancias con mayor fijación (10 a 14+ horas en piel), enorme proyección e intensidad imponente de nuestro catálogo:" + discountNote;
+            return "🔥 **Selección Modo Bestia y Duración Extrema" + gTitle + ":** He seleccionado las fragancias con mayor fijación (10 a 14+ horas en piel), enorme proyección e intensidad imponente de nuestro catálogo:";
         }
         if (state.userPreferences.scentType === 'dulce' || containsAny(queryText, DICTIONARY.dulce)) {
-            return "🍯 **Gourmand & Vainilla Exquisita" + gTitle + ":** Para los amantes de los aromas dulces, cálidos y reconfortantes, estas fragancias combinan vainilla, maderas y especias adictivas:" + discountNote;
+            return "🍯 **Gourmand & Vainilla Exquisita" + gTitle + ":** Para los amantes de los aromas dulces, cálidos y reconfortantes, estas fragancias combinan vainilla, maderas y especias adictivas:";
         }
         if (state.userPreferences.scentType === 'amaderado' || containsAny(queryText, DICTIONARY.amaderado)) {
-            return "🪵 **Carácter y Maderas Nobles" + gTitle + ":** Maderas finas de sándalo, cedro y oud para un porte imponente, maduro y de altísima distinción:" + discountNote;
+            return "🪵 **Carácter y Maderas Nobles" + gTitle + ":** Maderas finas de sándalo, cedro y oud para un porte imponente, maduro y de altísima distinción:";
         }
         if (state.userPreferences.gender === 'hombre') {
-            return "👑 **Selección Exclusiva Masculina:** Estas son las fragancias para hombre con mejor rendimiento, calidad y relación calidad-precio de nuestro catálogo:" + discountNote;
+            return "👑 **Selección Exclusiva Masculina:** Estas son las fragancias para hombre con mejor rendimiento, calidad y relación calidad-precio de nuestro catálogo:";
         }
         if (state.userPreferences.gender === 'mujer') {
-            return "🌸 **Selección Exclusiva Femenina:** Estas son las fragancias para mujer más elegantes, versátiles y con excelente duración de nuestro catálogo:" + discountNote;
+            return "🌸 **Selección Exclusiva Femenina:** Estas son las fragancias para mujer más elegantes, versátiles y con excelente duración de nuestro catálogo:";
         }
         if (state.userPreferences.gender === 'unisex') {
-            return "✨ **Selección Exclusiva Unisex:** Fragancias versátiles y opulentas ideales para compartir y destacar en cualquier momento:" + discountNote;
+            return "✨ **Selección Exclusiva Unisex:** Fragancias versátiles y opulentas ideales para compartir y destacar en cualquier momento:";
         }
 
-        return "✦ He analizado nuestro catálogo completo y estas son las fragancias que mejor encajan con tu estilo y preferencias:" + discountNote;
+        return "✦ He analizado nuestro catálogo completo y estas son las fragancias que mejor encajan con tu estilo y preferencias:";
     }
 
     // === RENDERIZADO DE MENSAJES Y PRODUCTOS EN LA INTERFAZ ===
     function renderProductCard(p) {
-        var discount = getActiveDiscountInfo();
-        var finalPrice = (discount.hasDiscount && p.precio) 
-            ? (typeof EventosManager !== 'undefined' && EventosManager.calcularPrecioConDescuento ? EventosManager.calcularPrecioConDescuento(p.precio) : Math.round(p.precio * (1 - discount.pct / 100))) 
-            : p.precio;
-
+        var finalPrice = p.precio;
         var priceFormatted = finalPrice ? '$' + finalPrice.toLocaleString('es-CO') : 'Consultar';
-        var oldPriceFormatted = (discount.hasDiscount && p.precio) ? '<span class="aura-card__old-price">$' + p.precio.toLocaleString('es-CO') + '</span>' : '';
-        var discountTag = discount.hasDiscount ? '<span class="aura-card__discount-tag">-' + discount.pct + '%</span>' : '';
+
 
         var waMessage = encodeURIComponent("¡Hola Perfumería Manizales! El Sommelier AI me recomendó *" + p.nombre + "* (" + (p.marca || '') + ") y deseo más información para comprarlo.");
         var waUrl = "https://wa.me/573147551411?text=" + waMessage;
@@ -3095,14 +3050,12 @@ var AuraIA = (function() {
                 '<div class="aura-card__thumb">' +
                     auraThumb +
                     '<div class="aura-card__fallback" style="display:none;">' + (p.emoji || '✦') + '</div>' +
-                    discountTag +
                 '</div>' +
                 '<div class="aura-card__info">' +
                     '<span class="aura-card__brand">' + (p.marca || 'Perfumería Manizales') + '</span>' +
                     '<h4 class="aura-card__title">' + p.nombre + '</h4>' +
                     '<span class="aura-card__scent">' + (p.tipo_olor || 'Exclusivo') + '</span>' +
                     '<div class="aura-card__price-row">' +
-                        oldPriceFormatted +
                         '<span class="aura-card__price">' + priceFormatted + '</span>' +
                     '</div>' +
                     '<div class="aura-card__actions">' +
@@ -3229,7 +3182,7 @@ var AuraIA = (function() {
                     '<button class="aura-chip" onclick="AuraIA.enviarMensajeRapido(\'Recomiéndame un perfume elegante para oficina y trabajo\')">💼 Para oficina</button>' +
                     '<button class="aura-chip" onclick="AuraIA.enviarMensajeRapido(\'Quiero un perfume potente con vainilla o madera que dure mucho\')">🔥 Seductor y duradero</button>' +
                     '<button class="aura-chip" onclick="AuraIA.enviarMensajeRapido(\'Busco una fragancia fresca para clima cálido\')">☀️ Fresco para calor</button>' +
-                    '<button class="aura-chip" onclick="AuraIA.enviarMensajeRapido(\'¿Qué perfumes tienen en descuento hoy?\')">✨ En oferta hoy</button>' +
+                    '<button class="aura-chip" onclick="AuraIA.enviarMensajeRapido(\'Busco un perfume para regalar\')">🎁 Para regalar</button>' +
                 '</div>' +
 
                 '<form class="aura-footer" id="aura-input-form" onsubmit="AuraIA.handleSubmit(event)">' +

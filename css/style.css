@@ -1038,57 +1038,6 @@ body.novedades-open .whatsapp-float {
     z-index: 1;
 }
 
-.product-card__badge--promo {
-    background: #EF4444;
-    color: white;
-}
-
-.product-card__badge--discount {
-    background: linear-gradient(135deg, #e11d48, #be123c);
-    color: #ffffff;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
-    animation: pulseDiscount 2.5s infinite ease-in-out;
-}
-
-[data-event="halloween"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #9333ea, #7c3aed);
-    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
-}
-[data-event="navidad"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #b91c1c, #991b1b);
-    border: 1px solid #fef08a;
-    box-shadow: 0 4px 12px rgba(185, 28, 28, 0.4);
-}
-[data-event="sanvalentin"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #db2777, #be185d);
-    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4);
-}
-[data-event="amorYamistad"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #d97706, #b45309);
-    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
-}
-[data-event="diamadre"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #e11d48, #db2777);
-    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
-}
-[data-event="blackfriday"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #ca8a04, #a16207);
-    color: #000000;
-    font-weight: 900;
-    box-shadow: 0 4px 12px rgba(202, 138, 4, 0.5);
-}
-[data-event="diapadre"] .product-card__badge--discount {
-    background: linear-gradient(135deg, #ca8a04, #854d0e);
-    box-shadow: 0 4px 12px rgba(202, 138, 4, 0.4);
-}
-
-@keyframes pulseDiscount {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
 .product-card__type {
     position: absolute;
     top: 16px;
@@ -1163,25 +1112,6 @@ body.novedades-open .whatsapp-float {
     display: flex;
     align-items: center;
     justify-content: space-between;
-}
-
-.product-card__price-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-}
-
-.product-card__price-old {
-    font-size: 13px;
-    font-weight: 500;
-    /* #9ca3af daba 2.5:1 sobre blanco (insuficiente). #6b7280 da 4.8:1 y sigue
-       viéndose como precio antigo, tachado y en gris. */
-    color: #6b7280;
-    text-decoration: line-through;
-    text-decoration-color: #ef4444;
-    text-decoration-thickness: 1.5px;
-    line-height: 1;
 }
 
 .product-card__price {
@@ -2245,67 +2175,6 @@ body.modal-open .whatsapp-float {
     flex-wrap: wrap;
 }
 
-.modal__price-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    background: rgba(201, 169, 110, 0.12);
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    margin-bottom: 16px;
-}
-
-.modal__price-wrap .modal__price {
-    margin-bottom: 0;
-    padding: 0;
-    background: transparent;
-}
-
-.modal__price-old {
-    font-size: 16px;
-    font-weight: 500;
-    color: #9ca3af;
-    text-decoration: line-through;
-    text-decoration-color: #ef4444;
-    text-decoration-thickness: 2px;
-}
-
-.modal__discount-tag {
-    display: inline-block;
-    padding: 4px 10px;
-    background: #e11d48;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: var(--radius-full);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-[data-event="blackfriday"] .modal__discount-tag {
-    background: #eab308;
-    color: #000000;
-}
-[data-event="halloween"] .modal__discount-tag {
-    background: #9333ea;
-}
-[data-event="navidad"] .modal__discount-tag {
-    background: #b91c1c;
-}
-[data-event="sanvalentin"] .modal__discount-tag {
-    background: #db2777;
-}
-[data-event="amorYamistad"] .modal__discount-tag {
-    background: #d97706;
-}
-[data-event="diamadre"] .modal__discount-tag {
-    background: #e11d48;
-}
-[data-event="diapadre"] .modal__discount-tag {
-    background: #ca8a04;
-}
-
 .modal__price {
     display: inline-block;
     font-size: 24px;
@@ -3343,22 +3212,10 @@ body.modal-open .whatsapp-float {
         border-top: 1px solid rgba(0, 0, 0, 0.04);
     }
 
-    .product-card__price-wrap {
-        display: flex;
-        flex-direction: row;
-        align-items: baseline;
-        gap: 5px;
-        flex-wrap: wrap;
-    }
-
     .product-card__price {
         font-size: 14.5px;
         font-weight: 700;
         text-align: left;
-    }
-
-    .product-card__price-old {
-        font-size: 11px;
     }
 
     .product-card__details-btn {
@@ -3541,8 +3398,7 @@ body.modal-open .whatsapp-float {
         margin-bottom: 6px;
     }
 
-    .modal__price-wrap,
-    .modal__price {
+    .modal__price{
         font-size: 19px;
         font-weight: 700;
         margin-bottom: 12px;
@@ -3944,11 +3800,6 @@ body.modal-open .whatsapp-float {
     /* Reducir complejidad de sombra en hover */
     .product-card:hover {
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    /* Deshabilitar pulsación del badge de descuento en móvil */
-    .product-card__badge--discount {
-        animation: none;
     }
 
     /* Scroll reveal sin delay en móvil para que aparezcan más rápido */

@@ -515,18 +515,6 @@ body.aura-chat-active .whatsapp-float {
     font-size: 26px;
 }
 
-.aura-card__discount-tag {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    background: #e63946;
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 4px;
-}
-
 .aura-card__info {
     flex: 1;
     min-width: 0;
@@ -565,12 +553,6 @@ body.aura-chat-active .whatsapp-float {
     align-items: center;
     gap: 6px;
     margin-bottom: 6px;
-}
-
-.aura-card__old-price {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
-    text-decoration: line-through;
 }
 
 .aura-card__price {

@@ -112,7 +112,16 @@ manizales-perfumeria/
 1. Edita el producto
 2. Marca "Está en promoción"
 3. Agrega el precio anterior
-4. Se mostrará badge "Oferta" automáticamente
+4. El sitio **no muestra descuentos**: el badge de oferta se retiró y el
+   precio que ve el cliente es siempre el precio real. El dato queda solo
+   como referencia interna en el panel.
+
+### Eventos temáticos (sin descuentos)
+- Los eventos (Halloween, Navidad, San Valentín, Día de la Madre, Día del
+  Padre, Amor y Amistad, Black Friday y Semana Santa) cambian la temática
+  del sitio y muestran **las fragancias que mejor encajan** con esa fecha.
+- **No aplican ningún porcentaje de descuento**: no hay precio tachado, ni
+  distintivo de "-X%", ni banner de descuento. El precio es siempre el real.
 
 ### Activar/Desactivar
 - En la lista de productos, click "Activar" o "Desactivar"

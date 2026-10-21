@@ -90,14 +90,14 @@ var EventosManager = (function() {
     }
 
     var EVENTOS = [
-        { id:'halloween', nombre:'Halloween', emoji:'🎃', descuento: 10, fechaInicio:{mes:9,dia:18}, fechaFin:{mes:10,dia:2}, colores:{navBg:'rgba(30,10,30,0.95)',navBorder:'rgba(180,80,180,0.2)',heroGradient:'linear-gradient(135deg,#1a0a2e,#2d1b4e,#1a0a2e)',accent:'#c084fc',btnColor:'#c084fc',sectionTitle:'#7c3aed'}, aromas:['oriental','oud','especiado'], tituloSeccion:'Especial Halloween', descripcionSeccion:'Fragancias misteriosas y oscuras con 10% de descuento especial' },
-        { id:'navidad', nombre:'Navidad / Año Nuevo', emoji:'🎄', descuento: 15, fechaInicio:{mes:11,dia:1}, fechaFin:{mes:0,dia:6}, colores:{navBg:'rgba(20,10,10,0.95)',navBorder:'rgba(201,169,110,0.3)',heroGradient:'linear-gradient(135deg,#1a1a2e,#2d1b1b,#1a1a2e)',accent:'#c9a96e',btnColor:'#c9a96e',sectionTitle:'#b8860b'}, aromas:['oriental','dulce','amaderado','gourmand'], tituloSeccion:'Especial de Navidad', descripcionSeccion:'Fragancias cálidas y envolventes con 15% de descuento navideño' },
-        { id:'sanvalentin', nombre:'San Valentín', emoji:'💕', descuento: 15, fechaInicio:{mes:1,dia:7}, fechaFin:{mes:1,dia:16}, colores:{navBg:'rgba(40,10,20,0.95)',navBorder:'rgba(236,72,153,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#4a1942,#2d1520)',accent:'#ec4899',btnColor:'#ec4899',sectionTitle:'#db2777'}, aromas:['floral','dulce'], tituloSeccion:'Especial San Valentín', descripcionSeccion:'Fragancias románticas con 15% de descuento para celebrar el amor' },
-        { id:'amorYamistad', nombre:'Amor y Amistad', emoji:'💛', descuento: 15, calcularFechas: calcularAmorYamistad, colores:{navBg:'rgba(35,10,30,0.95)',navBorder:'rgba(251,191,36,0.25)',heroGradient:'linear-gradient(135deg,#2a1040,#3d1535,#2a1040)',accent:'#fbbf24',btnColor:'#fbbf24',sectionTitle:'#d97706'}, aromas:['floral','dulce','frutal'], tituloSeccion:'Día del Amor y la Amistad', descripcionSeccion:'Fragancias ideales para regalar con 15% de descuento especial' },
-        { id:'diamadre', nombre:'Día de la Madre', emoji:'🌸', descuento: 15, calcularFechas: calcularDiaMadre, colores:{navBg:'rgba(40,20,25,0.95)',navBorder:'rgba(255,183,197,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#3d1a2a,#2d1520)',accent:'#FFB7C5',btnColor:'#FFB7C5',sectionTitle:'#d4627a'}, aromas:['floral','elegante'], tituloSeccion:'Especial Día de la Madre', descripcionSeccion:'Fragancias delicadas y elegantes con 15% de descuento para mamá' },
-        { id:'blackfriday', nombre:'Black Friday', emoji:'🛍️', descuento: 30, calcularFechas: calcularBlackFriday, colores:{navBg:'rgba(15,15,15,0.96)',navBorder:'rgba(234,179,8,0.35)',heroGradient:'linear-gradient(135deg,#09090b,#18181b,#09090b)',accent:'#eab308',btnColor:'#eab308',sectionTitle:'#ca8a04'}, aromas:['oriental','gourmand','amaderado','dulce'], tituloSeccion:'Ofertas Black Friday', descripcionSeccion:'¡Gran descuento del 30% en todas nuestras fragancias por Black Friday!' },
-        { id:'diapadre', nombre:'Día del Padre', emoji:'🌾', descuento: 15, calcularFechas: calcularDiaPadre, colores:{navBg:'rgba(30,25,10,0.95)',navBorder:'rgba(255,215,0,0.2)',heroGradient:'linear-gradient(135deg,#1a1a10,#2d2a15,#1a1a10)',accent:'#FFD700',btnColor:'#FFD700',sectionTitle:'#b8960a'}, aromas:['amaderado','fresco','aromatica'], tituloSeccion:'Especial Día del Padre', descripcionSeccion:'Fragancias con carácter con 15% de descuento para papá' },
-        { id:'pascua', nombre:'Semana Santa / Pascua', emoji:'🕊️', descuento: 10, calcularFechas: calcularSemanaSanta, colores:{navBg:'rgba(35,25,40,0.95)',navBorder:'rgba(201,169,214,0.25)',heroGradient:'linear-gradient(135deg,#2a1f30,#3d2a42,#2a1f30)',accent:'#c9a9d9',btnColor:'#c9a9d9',sectionTitle:'#8a6a9e'}, aromas:['floral','fresco','amaderado'], tituloSeccion:'Especial Semana Santa', descripcionSeccion:'Fragancias sutiles y elegantes con 10% de descuento de Pascua' }
+        { id:'halloween', nombre:'Halloween', emoji:'🎃', fechaInicio:{mes:9,dia:18}, fechaFin:{mes:10,dia:2}, colores:{navBg:'rgba(30,10,30,0.95)',navBorder:'rgba(180,80,180,0.2)',heroGradient:'linear-gradient(135deg,#1a0a2e,#2d1b4e,#1a0a2e)',accent:'#c084fc',btnColor:'#c084fc',sectionTitle:'#7c3aed'}, aromas:['oriental','oud','especiado'], tituloSeccion:'Especial Halloween', descripcionSeccion:'Fragancias misteriosas y oscuras, las que mejor encajan con el Halloween' },
+        { id:'navidad', nombre:'Navidad / Año Nuevo', emoji:'🎄', fechaInicio:{mes:11,dia:1}, fechaFin:{mes:0,dia:6}, colores:{navBg:'rgba(20,10,10,0.95)',navBorder:'rgba(201,169,110,0.3)',heroGradient:'linear-gradient(135deg,#1a1a2e,#2d1b1b,#1a1a2e)',accent:'#c9a96e',btnColor:'#c9a96e',sectionTitle:'#b8860b'}, aromas:['oriental','dulce','amaderado','gourmand'], tituloSeccion:'Especial de Navidad', descripcionSeccion:'Fragancias cálidas y envolventes, seleccionadas para regalar en Navidad' },
+        { id:'sanvalentin', nombre:'San Valentín', emoji:'💕', fechaInicio:{mes:1,dia:7}, fechaFin:{mes:1,dia:16}, colores:{navBg:'rgba(40,10,20,0.95)',navBorder:'rgba(236,72,153,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#4a1942,#2d1520)',accent:'#ec4899',btnColor:'#ec4899',sectionTitle:'#db2777'}, aromas:['floral','dulce'], tituloSeccion:'Especial San Valentín', descripcionSeccion:'Fragancias románticas, las más especiales para regalar en San Valentín' },
+        { id:'amorYamistad', nombre:'Amor y Amistad', emoji:'💛', calcularFechas: calcularAmorYamistad, colores:{navBg:'rgba(35,10,30,0.95)',navBorder:'rgba(251,191,36,0.25)',heroGradient:'linear-gradient(135deg,#2a1040,#3d1535,#2a1040)',accent:'#fbbf24',btnColor:'#fbbf24',sectionTitle:'#d97706'}, aromas:['floral','dulce','frutal'], tituloSeccion:'Día del Amor y la Amistad', descripcionSeccion:'Fragancias ideales para regalar en Amor y Amistad' },
+        { id:'diamadre', nombre:'Día de la Madre', emoji:'🌸', calcularFechas: calcularDiaMadre, colores:{navBg:'rgba(40,20,25,0.95)',navBorder:'rgba(255,183,197,0.2)',heroGradient:'linear-gradient(135deg,#2d1520,#3d1a2a,#2d1520)',accent:'#FFB7C5',btnColor:'#FFB7C5',sectionTitle:'#d4627a'}, aromas:['floral','elegante'], tituloSeccion:'Especial Día de la Madre', descripcionSeccion:'Fragancias delicadas y elegantes, las que más le gustan a mamá' },
+        { id:'blackfriday', nombre:'Black Friday', emoji:'🛍️', calcularFechas: calcularBlackFriday, colores:{navBg:'rgba(15,15,15,0.96)',navBorder:'rgba(234,179,8,0.35)',heroGradient:'linear-gradient(135deg,#09090b,#18181b,#09090b)',accent:'#eab308',btnColor:'#eab308',sectionTitle:'#ca8a04'}, aromas:['oriental','gourmand','amaderado','dulce'], tituloSeccion:'Selección Black Friday', descripcionSeccion:'Nuestra selección más acclaimed de fragancias para la temporada de ofertas' },
+        { id:'diapadre', nombre:'Día del Padre', emoji:'🌾', calcularFechas: calcularDiaPadre, colores:{navBg:'rgba(30,25,10,0.95)',navBorder:'rgba(255,215,0,0.2)',heroGradient:'linear-gradient(135deg,#1a1a10,#2d2a15,#1a1a10)',accent:'#FFD700',btnColor:'#FFD700',sectionTitle:'#b8960a'}, aromas:['amaderado','fresco','aromatica'], tituloSeccion:'Especial Día del Padre', descripcionSeccion:'Fragancias con carácter, las más especiales para papá' },
+        { id:'pascua', nombre:'Semana Santa / Pascua', emoji:'🕊️', calcularFechas: calcularSemanaSanta, colores:{navBg:'rgba(35,25,40,0.95)',navBorder:'rgba(201,169,214,0.25)',heroGradient:'linear-gradient(135deg,#2a1f30,#3d2a42,#2a1f30)',accent:'#c9a9d9',btnColor:'#c9a9d9',sectionTitle:'#8a6a9e'}, aromas:['floral','fresco','amaderado'], tituloSeccion:'Especial Semana Santa', descripcionSeccion:'Fragancias sutiles y elegantes, las que mejor encajan con Semana Santa' }
     ];
 
     var CANVAS_MAP = {
@@ -515,11 +515,7 @@ var EventosManager = (function() {
         }
 
         if (titleEl) titleEl.textContent = evento.tituloSeccion;
-        var descPct = evento.descuento || 0;
-        var subtitle = descPct > 0 
-            ? '✨ ' + descPct + '% de descuento en todas las fragancias.'
-            : evento.descripcionSeccion;
-        if (descEl) descEl.textContent = subtitle;
+        if (descEl) descEl.textContent = evento.descripcionSeccion;
 
         var limiteInicial = Math.min(productos.length, 28);
         var mostrandoTodos = false;
@@ -562,23 +558,8 @@ var EventosManager = (function() {
 
     function crearEventoCard(product, evento) {
         var colors = product.colores || { principal: '#C9A96E', secundario: '#E8D5B7' };
-        var descPct = evento && evento.descuento ? evento.descuento : 0;
         var precioOriginal = product.precio || 0;
-        var precioFinal = descPct > 0 ? Math.round(precioOriginal * (1 - descPct / 100)) : precioOriginal;
-        
-        var priceHtml = '';
-        if (descPct > 0 && precioOriginal > 0) {
-            priceHtml = '<div class="product-card__price-wrap">' +
-                '<span class="product-card__price-old">$' + precioOriginal.toLocaleString('es-CO') + '</span>' +
-                '<span class="product-card__price">$' + precioFinal.toLocaleString('es-CO') + '</span>' +
-            '</div>';
-        } else {
-            priceHtml = '<div class="product-card__price">' + (precioOriginal ? '$' + precioOriginal.toLocaleString('es-CO') : 'Consultar precio') + '</div>';
-        }
-
-        var discountBadge = descPct > 0 
-            ? '<span class="product-card__badge product-card__badge--discount">-' + descPct + '%</span>'
-            : '';
+        var priceHtml = '<div class="product-card__price">' + (precioOriginal ? '$' + precioOriginal.toLocaleString('es-CO') : 'Consultar precio') + '</div>';
 
         // Las tarjetas del evento son las que se pintan de a golpe (28 a la vez), asi que
         // usan la misma miniatura de 600px que el resto del catalogo.
@@ -592,7 +573,6 @@ var EventosManager = (function() {
             '<div class="product-card__image">' +
                 imagenHtml +
                 (rutas ? '<div class="product-card__fallback" style="display:none;">' + (product.emoji || '✦') + '</div>' : '') +
-                discountBadge +
                 '<span class="product-card__type">' + (product.emoji || '✦') + '</span>' +
             '</div>' +
             '<div class="product-card__content"><h3 class="product-card__name">' + product.nombre + '</h3><p class="product-card__brand">' + product.marca + '</p>' +
@@ -614,7 +594,7 @@ var EventosManager = (function() {
         var html = '<div class="test-panel__header" style="display:flex;justify-content:space-between;align-items:center;"><span>MODO PRUEBA</span><button id="test-panel-close" style="background:transparent;border:none;color:#fff;cursor:pointer;font-size:16px;line-height:1;padding:0 4px;" title="Cerrar panel">&times;</button></div><div class="test-panel__body">';
         for (var i = 0; i < EVENTOS.length; i++) {
             var ev = EVENTOS[i];
-            html += '<button class="test-panel__btn" data-evento="' + ev.id + '">' + ev.nombre + ' (' + ev.descuento + '%)</button>';
+            html += '<button class="test-panel__btn" data-evento="' + ev.id + '">' + ev.nombre + '</button>';
         }
         html += '<button class="test-panel__btn test-panel__btn--normal" data-evento="normal">Normal</button></div>';
         panel.innerHTML = html;
@@ -656,15 +636,16 @@ var EventosManager = (function() {
         return eventoActivo;
     }
 
+    /* Los eventos ya NO aplican descuentos: solo cambian la tematica y
+       muestran las fragancias que mejor encajan con esa fecha. Estas dos
+       funciones se conservan porque el resto del sitio las llama, pero
+       devuelven siempre 0 y el precio sin modificar. */
     function getDescuentoActivo() {
-        return eventoActivo ? (eventoActivo.descuento || 0) : 0;
+        return 0;
     }
 
     function calcularPrecioConDescuento(precioBase) {
-        if (!precioBase || isNaN(precioBase)) return precioBase;
-        var desc = getDescuentoActivo();
-        if (desc <= 0) return precioBase;
-        return Math.round(precioBase * (1 - desc / 100));
+        return precioBase;
     }
 
     var heroObserver = null;
